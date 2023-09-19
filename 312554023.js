@@ -18,22 +18,36 @@
     const {
       options,
       onOptionClicked,
-      selectedOption
+      selectedOption,
+      optionToRemove
     } = props;
+    
     
     let select = selection.selectAll('select').data([null]);
     select = select.enter().append('select')
       .merge(select)
         .on('change', function() {
           onOptionClicked(this.value);
-        });
-    
-    const option = select.selectAll('option').data(options);
+        })
+      
+    select.selectAll('option.default')
+        .data([null])
+        .enter()
+        .append('option')
+        .classed('default', true)
+        .attr('value', '')
+        .attr('disabled', true)
+        .attr('selected', true)
+        .text('x-axis/y-axis');
+
+    const option = select.selectAll('option:not(.default)').data(options);
     option.enter().append('option')
       .merge(option)
         .attr('value', d => d)
         .property('selected', d => d === selectedOption)
         .text(d => d);
+
+    select.selectAll('option').filter(d => d === "class").remove();
   };
 
   const scatterPlot = (selection, props) => {
@@ -194,6 +208,8 @@
       d['sepal width'] = +d['sepal width'];
     }
   )
+/*  xColumn = data.columns[0];
+  yColumn = data.columns[1]; */
       render();
     });
 
