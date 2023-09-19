@@ -64,14 +64,15 @@ const colorMapping = {
 
     const innerWidth = width - margin.left - margin.right;
     const innerHeight = height - margin.top - margin.bottom;
-    
+    const filteredData = data.filter(d => !(xValue(d) === 0 && yValue(d) === 0));
+
     const xScale = d3.scaleLinear()
-      .domain(d3.extent(data, xValue))
+      .domain(d3.extent(filteredData, xValue))
       .range([0, innerWidth])
       .nice();
     
     const yScale = d3.scaleLinear();
-    yScale.domain(d3.extent(data, yValue));
+    yScale.domain(d3.extent(filteredData, yValue));
     yScale.range([innerHeight, 0]);
     yScale.nice();
     
@@ -155,7 +156,7 @@ const colorMapping = {
         .text(d => d[0]);
 
     let circles = g.merge(gEnter)
-      .selectAll('circle').data(data.filter(d => xValue(d) !== 0 || yValue(d) !== 0));
+      .selectAll('circle').data(filteredData);
     circles
       .enter().append('circle')
         .attr('cx', innerWidth / 2)
