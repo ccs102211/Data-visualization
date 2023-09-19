@@ -1,3 +1,10 @@
+const colorMapping = {
+  'Iris-setosa': 'red',
+  'Iris-versicolor': 'blue',
+  'Iris-virginica': 'green'
+};
+
+
 (function (d3) {
   'use strict';
 
@@ -19,34 +26,26 @@
       options,
       onOptionClicked,
       selectedOption,
-      optionToRemove
     } = props;
     
     
     let select = selection.selectAll('select').data([null]);
     select = select.enter().append('select')
       .merge(select)
-        .on('change', function() {
+      .on('change', function() {
           onOptionClicked(this.value);
-        })
-      
-    select.selectAll('option.default')
-        .data([null])
-        .enter()
-        .append('option')
-        .classed('default', true)
-        .attr('value', '')
-        .attr('disabled', true)
-        .attr('selected', true)
-        .text('x-axis/y-axis');
+          if (this.value !== "-- x-axis --") {
+              d3.select(this).selectAll('option[value=""]').remove();
+          }
+      });
 
-    const option = select.selectAll('option:not(.default)').data(options);
+    select.selectAll('option:not(:first-child)').remove();
+
+    const option = select.selectAll('option').data(options, d => d);
     option.enter().append('option')
-      .merge(option)
-        .attr('value', d => d)
-        .property('selected', d => d === selectedOption)
-        .text(d => d);
-
+      .attr('value', d => d)
+      .property('selected', d => d === selectedOption)
+      .text(d => d);
     select.selectAll('option').filter(d => d === "class").remove();
   };
 
@@ -62,7 +61,7 @@
       height,
       data
     } = props;
-    
+
     const innerWidth = width - margin.left - margin.right;
     const innerHeight = height - margin.top - margin.bottom;
     
@@ -142,6 +141,7 @@
         .attr('cx', innerWidth / 2)
         .attr('cy', innerHeight / 2)
         .attr('r', 0)
+        .attr('fill', d => colorMapping[d.class])
       .merge(circles)
       .transition().duration(2000)
       .delay((d, i) => i * 10)
@@ -191,7 +191,7 @@
       yValue: d => d[yColumn],
       circleRadius: 10,
       yAxisLabel: yColumn,
-      margin: { top: 10, right: 40, bottom: 88, left: 150 },
+      margin: { top: 20, right: 40, bottom: 88, left: 150 },
       width,
       height,
       data
