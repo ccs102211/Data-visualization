@@ -134,8 +134,8 @@ const colorMapping = {
         .text(xAxisLabel);
 
     
-    const circles = g.merge(gEnter)
-      .selectAll('circle').data(data);
+    let circles = g.merge(gEnter)
+      .selectAll('circle').data(data.filter(d => xValue(d) !== 0 || yValue(d) !== 0));
     circles
       .enter().append('circle')
         .attr('cx', innerWidth / 2)
@@ -148,6 +148,8 @@ const colorMapping = {
         .attr('cy', d => yScale(yValue(d)))
         .attr('cx', d => xScale(xValue(d)))
         .attr('r', circleRadius);
+        
+    circles.filter(d => d['petal length']===0 || d['sepal length']===0 || d['petal width']===0 || d['sepal width']===0).remove();
   };
 
   const svg = d3.select('svg');
@@ -208,8 +210,6 @@ const colorMapping = {
       d['sepal width'] = +d['sepal width'];
     }
   )
-/*  xColumn = data.columns[0];
-  yColumn = data.columns[1]; */
       render();
     });
 
