@@ -134,6 +134,26 @@ const colorMapping = {
         .text(xAxisLabel);
 
     
+      const legend = gEnter.append('g')
+        .attr('transform', `translate(${innerWidth + 40}, ${20})`)
+        .selectAll('.legend')
+        .data(Object.entries(colorMapping))
+        .enter().append('g')
+          .attr('class', 'legend')
+          .attr('transform', (d, i) => `translate(0, ${i * 20})`);
+      
+      legend.append('rect')
+        .attr('width', 18)
+        .attr('height', 18)
+        .attr('fill', d => d[1]);
+      
+      legend.append('text')
+        .attr('x', 24)
+        .attr('y', 9)
+        .attr('dy', '.35em')
+        .style('text-anchor', 'start')
+        .text(d => d[0]);
+
     let circles = g.merge(gEnter)
       .selectAll('circle').data(data.filter(d => xValue(d) !== 0 || yValue(d) !== 0));
     circles
@@ -150,6 +170,7 @@ const colorMapping = {
         .attr('r', circleRadius);
         
     circles.filter(d => d['petal length']===0 || d['sepal length']===0 || d['petal width']===0 || d['sepal width']===0).remove();
+    
   };
 
   const svg = d3.select('svg');
@@ -193,7 +214,7 @@ const colorMapping = {
       yValue: d => d[yColumn],
       circleRadius: 10,
       yAxisLabel: yColumn,
-      margin: { top: 20, right: 40, bottom: 88, left: 150 },
+      margin: { top: 20, right: 170, bottom: 88, left: 150 },
       width,
       height,
       data
