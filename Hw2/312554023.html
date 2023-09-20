@@ -1,16 +1,37 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Scatter Plot</title>
-    <link rel="stylesheet" href="styles.css">
+
+<head>
+    <title>Parallel Coordinate Plots</title>
+    <link rel="stylesheet" href="312554023.css">
     <script src="https://d3js.org/d3.v7.min.js"></script>
-  </head>
-  <body>
-    <div id="menu1"></div>
-    <div id="menu2"></div>
-    <div id="menu3"></div>
-    <div id="menu4"></div>
-    <svg width="800" height="500"></svg>
+</head>
+
+<body>
+    <div id="menus">
+        <span id="dimension-menu-1">
+            <select>
+                <option disabled selected value>-- select 1st dimension --</option>
+            </select>
+        </span>
+        <span id="dimension-menu-2">
+            <select>
+                <option disabled selected value>-- select 2nd dimension --</option>
+            </select>
+        </span>
+        <span id="dimension-menu-3">
+            <select>
+                <option disabled selected value>-- select 3rd dimension --</option>
+            </select>
+        </span>
+        <span id="dimension-menu-4">
+            <select>
+                <option disabled selected value>-- select 4th dimension --</option>
+            </select>
+        </span>
+    </div>
+    <svg width="960" height="450"></svg>
     <script src="312554023.js"></script>
-  </body>
+</body>
+
 </html>

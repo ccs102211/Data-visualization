@@ -3,8 +3,13 @@ body {
   overflow: hidden;
 }
 
-circle {
-  opacity: 0.3;
+.foreground path {
+  stroke-width: 1.5px; /* 這將使線條更粗 */
+  opacity: 0.7; /* 或者您希望的其他值 */
+}
+
+.background path {
+  stroke-width: 0.5px; /* 背景線條可以稍微細一點 */
 }
 
 text {
@@ -17,7 +22,7 @@ text {
 }
 
 .tick line {
-  stroke: #C0C0BB;
+  stroke: #c0c04f;
 }
 
 .axis-label {
