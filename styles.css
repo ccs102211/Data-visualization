@@ -4,7 +4,6 @@ body {
 }
 
 circle {
-  fill: red;
   opacity: 0.3;
 }
 
@@ -37,4 +36,14 @@ text {
 
 #menus select option {
   font-size: 1rem;
+}
+
+svg {
+  display: block;
+  margin: auto;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
 }

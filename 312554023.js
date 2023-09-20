@@ -1,3 +1,10 @@
+const colorMapping = {
+  'Iris-setosa': 'red',
+  'Iris-versicolor': 'blue',
+  'Iris-virginica': 'green'
+};
+
+
 (function (d3) {
   'use strict';
 
@@ -19,34 +26,26 @@
       options,
       onOptionClicked,
       selectedOption,
-      optionToRemove
     } = props;
     
     
     let select = selection.selectAll('select').data([null]);
     select = select.enter().append('select')
       .merge(select)
-        .on('change', function() {
+      .on('change', function() {
           onOptionClicked(this.value);
-        })
-      
-    select.selectAll('option.default')
-        .data([null])
-        .enter()
-        .append('option')
-        .classed('default', true)
-        .attr('value', '')
-        .attr('disabled', true)
-        .attr('selected', true)
-        .text('x-axis/y-axis');
+          if (this.value !== "-- x-axis --") {
+              d3.select(this).selectAll('option[value=""]').remove();
+          }
+      });
 
-    const option = select.selectAll('option:not(.default)').data(options);
+    select.selectAll('option:not(:first-child)').remove();
+
+    const option = select.selectAll('option').data(options, d => d);
     option.enter().append('option')
-      .merge(option)
-        .attr('value', d => d)
-        .property('selected', d => d === selectedOption)
-        .text(d => d);
-
+      .attr('value', d => d)
+      .property('selected', d => d === selectedOption)
+      .text(d => d);
     select.selectAll('option').filter(d => d === "class").remove();
   };
 
@@ -62,17 +61,18 @@
       height,
       data
     } = props;
-    
+
     const innerWidth = width - margin.left - margin.right;
     const innerHeight = height - margin.top - margin.bottom;
-    
+    const filteredData = data.filter(d => !(xValue(d) === 0 && yValue(d) === 0));
+
     const xScale = d3.scaleLinear()
-      .domain(d3.extent(data, xValue))
+      .domain(d3.extent(filteredData, xValue))
       .range([0, innerWidth])
       .nice();
     
     const yScale = d3.scaleLinear();
-    yScale.domain(d3.extent(data, yValue));
+    yScale.domain(d3.extent(filteredData, yValue));
     yScale.range([innerHeight, 0]);
     yScale.nice();
     
@@ -135,19 +135,43 @@
         .text(xAxisLabel);
 
     
-    const circles = g.merge(gEnter)
-      .selectAll('circle').data(data);
+      const legend = gEnter.append('g')
+        .attr('transform', `translate(${innerWidth + 40}, ${20})`)
+        .selectAll('.legend')
+        .data(Object.entries(colorMapping))
+        .enter().append('g')
+          .attr('class', 'legend')
+          .attr('transform', (d, i) => `translate(0, ${i * 20})`);
+      
+      legend.append('rect')
+        .attr('width', 18)
+        .attr('height', 18)
+        .attr('fill', d => d[1]);
+      
+      legend.append('text')
+        .attr('x', 24)
+        .attr('y', 9)
+        .attr('dy', '.35em')
+        .style('text-anchor', 'start')
+        .text(d => d[0]);
+
+    let circles = g.merge(gEnter)
+      .selectAll('circle').data(filteredData);
     circles
       .enter().append('circle')
         .attr('cx', innerWidth / 2)
         .attr('cy', innerHeight / 2)
         .attr('r', 0)
+        .attr('fill', d => colorMapping[d.class])
       .merge(circles)
       .transition().duration(2000)
       .delay((d, i) => i * 10)
         .attr('cy', d => yScale(yValue(d)))
         .attr('cx', d => xScale(xValue(d)))
         .attr('r', circleRadius);
+        
+    circles.filter(d => d['petal length']===0 || d['sepal length']===0 || d['petal width']===0 || d['sepal width']===0).remove();
+    
   };
 
   const svg = d3.select('svg');
@@ -191,7 +215,7 @@
       yValue: d => d[yColumn],
       circleRadius: 10,
       yAxisLabel: yColumn,
-      margin: { top: 10, right: 40, bottom: 88, left: 150 },
+      margin: { top: 20, right: 170, bottom: 88, left: 150 },
       width,
       height,
       data
@@ -208,8 +232,6 @@
       d['sepal width'] = +d['sepal width'];
     }
   )
-/*  xColumn = data.columns[0];
-  yColumn = data.columns[1]; */
       render();
     });
 
