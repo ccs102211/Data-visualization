@@ -57,11 +57,18 @@ text {
   gap: 5px;
 }
 
+#plot-title {
+  font-size: 24px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
 svg {
   display: block;
   margin: auto;
   position: absolute;
-  top: 0;
+  top: 30;
   right: 0;
   bottom: 0;
   left: 0;
