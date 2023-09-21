@@ -97,31 +97,7 @@ const colorMapping = {
         .attr("d", path)
         .attr("stroke", d => colorMapping[d.class])
         .attr("fill", "none");
-
-        const drag = d3.drag()
-        .on("start", d => {
-            dragging[d] = x(d);
-        })
-        .on("drag", (event, d) => {
-          dragging[d] = Math.min(innerWidth, Math.max(0, event.x));
-            foreground.attr("d", path);
-            background.attr("d", path);
-            dimensionNames.sort((a, b) => position(a) - position(b));
-            x.domain(dimensionNames);
-            dimension.attr("transform", d => `translate(${x(d)})`);
-        })
-        .on("end", (d,event) => {
-            delete dragging[d];
-            transition(d3.select(event.target)).attr("transform", `translate(${x(d)})`);
-            transition(foreground).attr("d", path);
-        });
     
-        const transition = g =>  
-        g.transition().duration(300);
-    const position = d => dragging[d] == null ? x(d) : dragging[d];
-    let dragging = {};
-    
-
     const dimension = selection.selectAll(".dimension")
         .data(dimensionNames)
         .enter().append("g")
@@ -142,8 +118,41 @@ const colorMapping = {
     .attr("x", -9)
     .text(d => d.replace(/[0-9]/g, ""));
 
-    dimension.call(drag);
-};
+    const drag = d3.drag()
+    .on("start", (event, d) => {
+      dragging[d] = x(d);
+      d3.select(event.sourceEvent.target)
+          .style("fill", "orange");
+    })
+    .on("drag", (event, d) => {
+      dragging[d] = Math.min(innerWidth, Math.max(0, event.x));
+      dimensionNames.sort((a, b) => position(a) - position(b));
+      x.domain(dimensionNames);
+  
+      dimension.transition()
+          .duration(50)
+          .attr("transform", d => `translate(${x(d)})`);
+  
+      foreground.attr("d", path);
+      background.attr("d", path);
+    })
+    .on("end", (event, d) => {
+      delete dragging[d];
+      transition(d3.select(event.target))
+          .attr("transform", `translate(${x(d)})`);
+      transition(foreground).attr("d", path);
+      transition(background).attr("d", path);
+      d3.selectAll(".dimension")
+        .style("fill", null);
+  })
+
+  const transition = g =>  
+    g.transition().duration(500);
+  const position = d => dragging[d] == null ? x(d) : dragging[d];
+  let dragging = {};
+
+      dimension.call(drag);
+  };
 
 
   const svg = d3.select('svg');
