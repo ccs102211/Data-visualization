@@ -123,6 +123,7 @@ const colorMapping = {
   const svg = d3.select('svg');
   const width = +svg.attr('width');
   const height = +svg.attr('height');
+  const title = "Parallel Coordinate Plots";
 
   let data;
   let dimensions = {};
@@ -162,6 +163,13 @@ const colorMapping = {
       height,
       data
     });
+
+    svg.append("text")
+       .attr("x", width / 2)
+       .attr("y", 50)  // 調整為所需的位置
+       .attr("text-anchor", "middle")
+       .attr("font-size", "24px")  // 調整為所需的字體大小
+       .text(title);
   };
 
   const visibleClasses = new Set(Object.keys(colorMapping));
