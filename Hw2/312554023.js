@@ -111,6 +111,11 @@ const colorMapping = {
         .attr("y", -9)
         .text(d => d);
 
+    dimension.append("text")
+    .style("text-anchor","middle")
+    .attr("y", innerHeight + 30)
+    .attr("x", -9)
+    .text(d => d.replace(/[0-9]/g, ""));
 };
 
 
@@ -131,13 +136,13 @@ const colorMapping = {
     });
     dimensions = sortedDimensions;
 
-    svg.selectAll("*").remove();
+    svg.selectAll("*:not(#titleGroup)").remove();
 
     render();
 };
 
   const render = () => {
-    svg.selectAll("*").remove();
+    svg.selectAll("*:not(#titleGroup)").remove();
 
     const menus = ["dimension-menu-1", "dimension-menu-2", "dimension-menu-3", "dimension-menu-4"];
     menus.forEach(menuId => {
