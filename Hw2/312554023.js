@@ -20,7 +20,7 @@ const colorMapping = {
       .merge(select)
       .on('change', function() {
           onOptionClicked(this.value, menuId);
-          if (this.value !== `-- select ${menuId.split('-').pop()} dimension --`) {
+          if (this.value !== `-- ${menuId.split('-').pop()} axis --`) {
               d3.select(this).selectAll('option[value=""]').remove();
           }
       });
@@ -65,13 +65,11 @@ const colorMapping = {
           return [x(p), y[p](value)];
       });
       if (coordinates.length > 0) {
-          // Take the first coordinate as the starting point with 'M'
           const start = `M${coordinates[0].join(",")}`;
-          // For the rest of the coordinates, use 'L'
           const lines = coordinates.slice(1).map(coord => `L${coord.join(",")}`).join("");
           return start + lines;
       }
-      return "";  // Return an empty string if there are no coordinates
+      return "";
   };
 
     const x = d3.scalePoint()
@@ -134,7 +132,7 @@ const colorMapping = {
     dimensions = sortedDimensions;
 
     svg.selectAll("*").remove();
-    
+
     render();
 };
 
