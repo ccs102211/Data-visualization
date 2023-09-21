@@ -84,7 +84,7 @@ const colorMapping = {
     const background = selection.append("g")
         .attr("class", "background")
         .selectAll("path")
-        .data(data)
+        .data(data.filter(d => visibleClasses.has(d.class)))
         .enter().append("path")
         .attr("d", path)
         .attr("stroke", "#ccc")
@@ -93,7 +93,7 @@ const colorMapping = {
     const foreground = selection.append("g")
         .attr("class", "foreground")
         .selectAll("path")
-        .data(data)
+        .data(data.filter(d => visibleClasses.has(d.class)))
         .enter().append("path")
         .attr("d", path)
         .attr("stroke", d => colorMapping[d.class])
@@ -113,7 +113,6 @@ const colorMapping = {
         .attr("y", -9)
         .text(d => d);
 
-    // Add brushing functionality here if needed
 };
 
 
@@ -127,10 +126,15 @@ const colorMapping = {
   const onDimensionSelected = (dimension, menuId) => {
     dimensions[menuId] = dimension;
 
-    // Clear the SVG content
-    svg.selectAll("*").remove();
+    const sortedKeys = Object.keys(dimensions).sort();
+    const sortedDimensions = {};
+    sortedKeys.forEach(key => {
+        sortedDimensions[key] = dimensions[key];
+    });
+    dimensions = sortedDimensions;
 
-    // Then re-render the chart
+    svg.selectAll("*").remove();
+    
     render();
 };
 
@@ -155,6 +159,18 @@ const colorMapping = {
       data
     });
   };
+
+  const visibleClasses = new Set(Object.keys(colorMapping));
+
+  d3.selectAll("#class-selection input[type='checkbox']").on("change", function() {
+      if (this.checked) {
+          visibleClasses.add(this.value);
+      } else {
+          visibleClasses.delete(this.value);
+      }
+      render();
+  });
+
 
   d3.csv('http://vis.lab.djosix.com:2023/data/iris.csv')
     .then(irisdata => {
