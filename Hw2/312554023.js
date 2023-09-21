@@ -32,7 +32,8 @@ const colorMapping = {
       .attr('value', d => d)
       .property('selected', d => d === selectedOption)
       .text(d => d);
-    select.selectAll('option').filter(d => d === "class").remove();
+    
+      select.selectAll('option').filter(d => d === "class").remove();
   };
 
   const parallelCoordinatePlot = (selection, props) => {
