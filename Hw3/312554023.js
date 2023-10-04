@@ -23,10 +23,11 @@ fetch('abalone.data')
         matrix.push(row);
       }
       allCorrelationMatrices[sex] = matrix;
+      drawHeatmap(allCorrelationMatrices[sex], features, sex);
+      console.log(sex)
     }
 
     //document.getElementById('results').textContent = JSON.stringify(allCorrelationMatrices, null, 2);
-    drawHeatmap(allCorrelationMatrices['M'], features);
   })
   .catch(error => console.error("Error:", error));
 
@@ -51,14 +52,15 @@ function mean(arr) {
   return arr.reduce((sum, val) => sum + val, 0) / arr.length;
 }
 
-function drawHeatmap(matrix, features) {
+function drawHeatmap(matrix, features, sex) {
+  const containerId = `#heatmap-${sex}`;
   const size = 50;  // 每個格子的大小
   const margin = { top: 20, right: 20, bottom: 20, left: 20 };
   const width = matrix[0].length * size + margin.left + margin.right;
   const height = matrix.length * size + margin.top + margin.bottom;
 
   // 創建SVG元素
-  const svg = d3.select("#heatmap").append("svg")
+  const svg = d3.select(containerId).append("svg")
     .attr("width", width)
     .attr("height", height)
     .append("g")
