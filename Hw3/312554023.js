@@ -25,7 +25,8 @@ fetch('abalone.data')
       allCorrelationMatrices[sex] = matrix;
     }
 
-    document.getElementById('results').textContent = JSON.stringify(allCorrelationMatrices, null, 2);
+    //document.getElementById('results').textContent = JSON.stringify(allCorrelationMatrices, null, 2);
+    drawHeatmap(allCorrelationMatrices['M'], features);
   })
   .catch(error => console.error("Error:", error));
 
@@ -45,7 +46,10 @@ function calculatePearsonCorrelation(arr1, arr2) {
 
   return numerator / (Math.sqrt(denominator1) * Math.sqrt(denominator2));
 }
-drawHeatmap(allCorrelationMatrices['M'], features);
+
+function mean(arr) {
+  return arr.reduce((sum, val) => sum + val, 0) / arr.length;
+}
 
 function drawHeatmap(matrix, features) {
   const size = 50;  // 每個格子的大小
@@ -74,6 +78,16 @@ function drawHeatmap(matrix, features) {
         .attr("height", size)
         .style("fill", colors(matrix[i][j]))
         .style("stroke", "white");
+
+      // 在每個格子中填充數字
+      svg.append("text")
+        .attr("x", j * size + size / 2)  // 使數字在格子中居中
+        .attr("y", i * size + size / 2)
+        .attr("dy", ".35em")  // 微調，使文字垂直居中
+        .attr("text-anchor", "middle")  // 文字居中對齊
+        .text(matrix[i][j].toFixed(2))  // 保留兩位小數
+        .attr("font-size", "10px")  // 可根據需要調整字體大小
+        .attr("fill", "black");  // 文字顏色
     }
   }
 }
