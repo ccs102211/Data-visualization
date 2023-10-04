@@ -1,6 +1,21 @@
-<style>div[id^="heatmap-"] {
-  display: block;
-  margin-bottom: 20px;
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 300;
+  /* 使body填滿整個視窗高度 */
+  margin: 0;
 }
 
-</style>
+#container {
+  display: flex;
+  flex-direction: column;
+  /* 將熱圖垂直排列 */
+  align-items: center;
+  /* 將熱圖水平居中 */
+}
+
+svg {
+  transition: transform 0.3s, opacity 0.3s;
+  /* 平滑的過渡效果 */
+}

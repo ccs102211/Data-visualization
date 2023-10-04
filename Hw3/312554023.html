@@ -8,9 +8,16 @@
 </head>
 
 <body>
-  <div id="heatmap-M"></div>
-  <div id="heatmap-F"></div>
-  <div id="heatmap-I"></div>
+  <div>
+    <label><input type="checkbox" id="toggle-M" checked> Male</label>
+    <label><input type="checkbox" id="toggle-F" checked> Female</label>
+    <label><input type="checkbox" id="toggle-I" checked> Infant</label>
+  </div>
+  <div id="container">
+    <div id="heatmap-M"></div>
+    <div id="heatmap-F"></div>
+    <div id="heatmap-I"></div>
+  </div>
   <svg width="500" height="500"></svg>
   <pre id="results"></pre>
   <script src="312554023.js"></script>
