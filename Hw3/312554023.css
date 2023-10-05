@@ -17,5 +17,9 @@ body {
 
 svg {
   transition: transform 0.3s, opacity 0.3s;
-  /* 平滑的過渡效果 */
+}
+
+div[id^="heatmap-"] {
+  display: block;
+  margin-bottom: 20px;
 }

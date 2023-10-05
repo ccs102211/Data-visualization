@@ -157,7 +157,7 @@ function drawHeatmap(matrix, features, sex) {
         .attr("x", (d, i) => i * size + size / 2) // centralizing the label with the column
         .attr("y", -10) // slight padding from the top
         .attr("text-anchor", "middle")
-        .attr("transform", (d, i) => `translate(0,-10) rotate(-45, ${i * size + size / 2}, -10)`)  // rotating around the text starting point
+        .attr("transform", (d, i) => `translate(0,-10) rotate(-25, ${i * size + size / 2}, -10)`)  // rotating around the text starting point
         .attr("font-size", "14px");
 
     }
