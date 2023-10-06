@@ -96,7 +96,7 @@ function drawHeatmap(matrix, features, sex) {
             .attr('x', j * size - (size * 0.05))
             .attr('y', i * size - (size * 0.05));
 
-          d3.select(`#text-${i}-${j}`)
+          d3.select(`#text-${sex}-${i}-${j}`)
             .attr("font-size", "18px")
             .attr("x", j * size + size * 1.2 / 2)
             .attr("y", i * size + size * 1.2 / 2);
@@ -109,7 +109,7 @@ function drawHeatmap(matrix, features, sex) {
             .attr('x', j * size)
             .attr('y', i * size);
 
-          d3.select(`#text-${i}-${j}`)
+          d3.select(`#text-${sex}-${i}-${j}`)
             .attr("font-size", "15px")
             .attr("x", j * size + size / 2)
             .attr("y", i * size + size / 2);
@@ -120,7 +120,7 @@ function drawHeatmap(matrix, features, sex) {
         .attr("y", i * size + size / 2)
         .attr("dy", ".35em")
         .attr("text-anchor", "middle")
-        .attr("id", `text-${i}-${j}`)
+        .attr("id", `text-${sex}-${i}-${j}`)
         .text(matrix[i][j].toFixed(2))
         .attr("font-size", "15px")
         .attr("fill", "black");
@@ -131,7 +131,7 @@ function drawHeatmap(matrix, features, sex) {
         .attr("text-anchor", "middle")
         .style("font-size", "16px")
         .style("font-weight", "bold")
-        .text(`Abalone Type: ${sex}`);
+        .text(`Correlation matrix of Abalone Type: ${sex}`);
 
 
       const featureLabels = features.slice(1);
