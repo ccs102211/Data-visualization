@@ -1,3 +1,9 @@
+const colorMapping = {
+  'Iris-setosa': 'red',
+  'Iris-versicolor': 'blue',
+  'Iris-virginica': 'green'
+};
+
 const {
   csv,
   select,
@@ -48,8 +54,6 @@ const plotChart = (selection, originalData, itemX, itemY) => {
   // accessors (they give back one value from data)
   const xValue = (d) => d[itemX];
   const yValue = (d) => d[itemY];
-  const zValue = (d) => d.species;
-
 
   // x scale function
   const x = scaleLinear()
@@ -60,11 +64,6 @@ const plotChart = (selection, originalData, itemX, itemY) => {
   const y = scaleLinear()
     .domain(extent(data, yValue))
     .range([height - margin.bottom, margin.top]);
-
-  // z scale function for colors
-  const z = scaleOrdinal()
-    .domain(data.map((d) => d.species))
-    .range(schemeSet1);
 
   if (itemX === itemY) {
     // Create histogram data
@@ -93,7 +92,7 @@ const plotChart = (selection, originalData, itemX, itemY) => {
     const marks = data.map((d) => ({
       x: x(xValue(d)),
       y: y(yValue(d)),
-      z: z(zValue(d)),
+      color: colorMapping[d.class]  // <-- Get the color directly from the colorMapping
     }));
 
     selection
@@ -104,7 +103,7 @@ const plotChart = (selection, originalData, itemX, itemY) => {
       .attr('cy', (d) => d.y)
       .attr('r', radius)
       .attr('opacity', 0.7)
-      .attr('fill', (d) => d.z);
+      .attr('fill', d => d.color);  // <-- Use the color from colorMapping
   }
 
   // axes
