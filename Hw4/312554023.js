@@ -1,178 +1,179 @@
-const colorSchemes = {
-  'M': d3.scaleSequential(d3.interpolateBlues),
-  'F': d3.scaleSequential(d3.interpolateReds),
-  'I': d3.scaleSequential(d3.interpolateGreens)
+const {
+  csv,
+  select,
+  scaleLinear,
+  scaleBand,
+  scaleOrdinal,
+  histogram,
+  max,
+  extent,
+  axisLeft,
+  axisBottom,
+  schemeSet1, // color array
+} = d3;
+
+
+// Data source
+const csvUrl = 'http://vis.lab.djosix.com:2023/data/iris.csv';
+
+// specify how to parse data
+const parseRow = (d) => {
+  // cast numeric fields to numbers
+  d.sepal_length = +d.sepal_length;
+  d.sepal_width = +d.sepal_width;
+  d.petal_length = +d.petal_length;
+  d.petal_width = +d.petal_width;
+  return d;
+};
+
+// this time we divide by 4 to get a 4 x 4 matrix
+const width = window.innerWidth / 4;
+const height = window.innerHeight / 4;
+
+// implementing margin convention
+const margin = {
+  top: 20,
+  right: 20,
+  bottom: 40,
+  left: 50,
+};
+
+const radius = 4;
+
+// this is the function for plotting each chart
+const plotChart = (selection, originalData, itemX, itemY) => {
+  // Filter out data where either itemX or itemY is 0
+  const data = originalData.filter(d => Math.abs(d[itemX]) > 0.001 && Math.abs(d[itemY]) > 0.001);
+
+  // accessors (they give back one value from data)
+  const xValue = (d) => d[itemX];
+  const yValue = (d) => d[itemY];
+  const zValue = (d) => d.species;
+
+
+  // x scale function
+  const x = scaleLinear()
+    .domain(extent(data, xValue))
+    .range([margin.left, width - margin.right]);
+
+  // y scale function
+  const y = scaleLinear()
+    .domain(extent(data, yValue))
+    .range([height - margin.bottom, margin.top]);
+
+  // z scale function for colors
+  const z = scaleOrdinal()
+    .domain(data.map((d) => d.species))
+    .range(schemeSet1);
+
+  if (itemX === itemY) {
+    // Create histogram data
+    const bins = histogram()
+      .domain(x.domain())
+      .thresholds(x.ticks(20))
+      (data.map(xValue));
+
+    // Adjust y scale for histogram data
+    y.domain([0, max(bins, d => d.length)]).nice();
+
+    const bar = selection.selectAll(".bar")
+      .data(bins)
+      .enter().append("g")
+      .attr("class", "bar")
+      .attr("transform", d => `translate(${x(d.x0)},${y(d.length)})`);
+
+    bar.append("rect")
+      .attr("x", 1)
+      .attr("width", d => x(d.x1) - x(d.x0) - 1)
+      .attr("height", d => height - y(d.length) - margin.bottom)
+      .attr("fill", "steelblue");
+
+  } else {
+    // use map to transform data for scatter plot
+    const marks = data.map((d) => ({
+      x: x(xValue(d)),
+      y: y(yValue(d)),
+      z: z(zValue(d)),
+    }));
+
+    selection
+      .selectAll('circle')
+      .data(marks)
+      .join('circle')
+      .attr('cx', (d) => d.x)
+      .attr('cy', (d) => d.y)
+      .attr('r', radius)
+      .attr('opacity', 0.7)
+      .attr('fill', (d) => d.z);
+  }
+
+  // axes
+  selection
+    .append('g')
+    .attr('transform', `translate(${margin.left},0)`)
+    .call(axisLeft(y));
+
+  selection
+    .append('g')
+    .attr('transform', `translate(0,${height - margin.bottom})`)
+    .call(axisBottom(x));
 };
 
 
-fetch('http://vis.lab.djosix.com:2023/data/abalone.data')
-  .then(response => response.text())
-  .then(data => {
-    const rows = data.split('\n').filter(line => line.trim() !== '').map(line => line.split(','));
+const main = async () => {
+  const data = await csv(csvUrl, parseRow);
 
-    const features = ['Sex', 'Length', 'Diameter', 'Height', 'Whole_weight', 'Shucked_weight', 'Viscera_weight', 'Shell_weight', 'Rings'];
+  const numericFields = [...data.columns];
+  const speciesIndex = numericFields.indexOf('species');
+  numericFields.splice(speciesIndex, 1);
 
-    const sexValues = ['M', 'F', 'I'];
+  // Define a container to hold the entire 4x4 matrix
+  const container = select('body')
+    .append('svg')
+    .attr('width', window.innerWidth)
+    .attr('height', window.innerHeight);
 
-    let allCorrelationMatrices = {};
+  // Create 4x4 matrix of plots
+  for (let i = 0; i < numericFields.length; i++) {
+    for (let j = 0; j < numericFields.length; j++) {
+      const xPosition = i * width;
+      const yPosition = j * height;
 
-    for (let sex of sexValues) {
-      const filteredRows = rows.filter(row => row[0] === sex);
-      let matrix = [];
-      for (let i = 1; i < features.length; i++) {
-        let row = [];
-        for (let j = 1; j < features.length; j++) {
-          const values1 = filteredRows.map(row => parseFloat(row[i]));
-          const values2 = filteredRows.map(row => parseFloat(row[j]));
-          const correlation = i === j ? 1 : calculatePearsonCorrelation(values1, values2);
-          row.push(correlation);
-        }
-        matrix.push(row);
-      }
-      allCorrelationMatrices[sex] = matrix;
-      drawHeatmap(allCorrelationMatrices[sex], features, sex);
-      console.log(sex)
-    }
+      const svg = container
+        .append('svg')
+        .attr('x', xPosition)
+        .attr('y', yPosition)
+        .attr('width', width)
+        .attr('height', height);
 
-    //document.getElementById('results').textContent = JSON.stringify(allCorrelationMatrices, null, 2);
-  })
-  .catch(error => console.error("Error:", error));
-
-function calculatePearsonCorrelation(arr1, arr2) {
-  const mean1 = mean(arr1);
-  const mean2 = mean(arr2);
-
-  let numerator = 0;
-  let denominator1 = 0;
-  let denominator2 = 0;
-
-  for (let i = 0; i < arr1.length; i++) {
-    numerator += (arr1[i] - mean1) * (arr2[i] - mean2);
-    denominator1 += Math.pow(arr1[i] - mean1, 2);
-    denominator2 += Math.pow(arr2[i] - mean2, 2);
-  }
-
-  return numerator / (Math.sqrt(denominator1) * Math.sqrt(denominator2));
-}
-
-function mean(arr) {
-  return arr.reduce((sum, val) => sum + val, 0) / arr.length;
-}
-
-function drawHeatmap(matrix, features, sex) {
-  const containerId = `#heatmap-${sex}`;
-  const size = 60;
-  const margin = { top: 100, right: 150, bottom: 50, left: 150 };
-  const width = matrix[0].length * size + margin.left + margin.right;
-  const height = matrix.length * size + margin.top + margin.bottom;
-
-  const svgContainer = d3.select(containerId).append("svg")
-    .attr("width", width)
-    .attr("height", height)
-
-  const svg = svgContainer.append("g")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-  const rectGroup = svg.append("g");
-  const textGroup = svg.append("g");
-
-  const colors = colorSchemes[sex].domain([-1, 1]);
-
-
-  for (let i = 0; i < matrix.length; i++) {
-    for (let j = 0; j < matrix[i].length; j++) {
-      rectGroup.append("rect")
-        .attr("x", j * size)
-        .attr("y", i * size)
-        .attr("width", size)
-        .attr("height", size)
-        .style("fill", colors(matrix[i][j]))
-        .style("stroke", "white")
-        .on('mouseover', function () {
-          d3.select(this)
-            .style('opacity', '0.7')
-            .attr('width', size * 1.2)
-            .attr('height', size * 1.2)
-            .attr('x', j * size - (size * 0.05))
-            .attr('y', i * size - (size * 0.05));
-
-          d3.select(`#text-${sex}-${i}-${j}`)
-            .attr("font-size", "18px")
-            .attr("x", j * size + size * 1.2 / 2)
-            .attr("y", i * size + size * 1.2 / 2);
-        })
-        .on('mouseout', function () {
-          d3.select(this)
-            .style('opacity', '1')
-            .attr('width', size)
-            .attr('height', size)
-            .attr('x', j * size)
-            .attr('y', i * size);
-
-          d3.select(`#text-${sex}-${i}-${j}`)
-            .attr("font-size", "15px")
-            .attr("x", j * size + size / 2)
-            .attr("y", i * size + size / 2);
-        });
-
-      textGroup.append("text")
-        .attr("x", j * size + size / 2)
-        .attr("y", i * size + size / 2)
-        .attr("dy", ".35em")
-        .attr("text-anchor", "middle")
-        .attr("id", `text-${sex}-${i}-${j}`)
-        .text(matrix[i][j].toFixed(2))
-        .attr("font-size", "15px")
-        .attr("fill", "black");
-
-      textGroup.append("text")
-        .attr("x", width / 2 - margin.left)
-        .attr("y", -80)
-        .attr("text-anchor", "middle")
-        .style("font-size", "16px")
-        .style("font-weight", "bold")
-        .text(`Correlation matrix of Abalone Type: ${sex}`);
-
-
-      const featureLabels = features.slice(1);
-
-      svg.selectAll(".yLabel")
-        .data(featureLabels)
-        .enter()
-        .append("text")
-        .text(d => d)
-        .attr("x", -10)
-        .attr("y", (d, i) => i * size + size / 2)
-        .attr("dy", ".35em")
-        .attr("text-anchor", "end")
-        .attr("font-size", "14px");
-
-
-      svg.selectAll(".xLabel")
-        .data(featureLabels)
-        .enter()
-        .append("text")
-        .text(d => d)
-        .attr("x", (d, i) => i * size + size / 2)
-        .attr("y", -10)
-        .attr("text-anchor", "middle")
-        .attr("transform", (d, i) => `translate(0,-10) rotate(-25, ${i * size + size / 2}, -10)`)
-        .attr("font-size", "14px");
-
+      plotChart(svg, data, numericFields[i], numericFields[j]);
     }
   }
-}
 
-document.getElementById('toggle-M').addEventListener('change', function () {
-  document.getElementById('heatmap-M').style.display = this.checked ? 'block' : 'none';
-});
+  // Add labels at the top outside the main SVG
+  numericFields.forEach((field, i) => {
+    container
+      .append('text')
+      .attr('class', 'title')
+      .attr('x', (i + 0.5) * width)
+      .attr('y', margin.top / 2)
+      .attr('text-anchor', 'middle')
+      .attr('dy', '.32em')
+      .text(field);
+  });
 
-document.getElementById('toggle-F').addEventListener('change', function () {
-  document.getElementById('heatmap-F').style.display = this.checked ? 'block' : 'none';
-});
+  // Add labels on the left side outside the main SVG
+  numericFields.forEach((field, i) => {
+    container
+      .append('text')
+      .attr('class', 'title')
+      .attr('y', (i + 0.5) * height)
+      .attr('x', 20)  // 將標籤向右移動至40像素位置
+      .attr('text-anchor', 'middle')
+      .attr('dy', '.32em')
+      .attr('transform', `rotate(-90, ${10}, ${(i + 0.5) * height})`)  // 根據新位置調整旋轉的中心
+      .text(field);
+  });
+};
 
-document.getElementById('toggle-I').addEventListener('change', function () {
-  document.getElementById('heatmap-I').style.display = this.checked ? 'block' : 'none';
-});
-
-
+main();

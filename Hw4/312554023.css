@@ -1,8 +1,17 @@
-circle {
-  fill-opacity: 0.6;
-  stroke: #fff;
+/* hide scrollbar for full windows svg*/
+body {
+  margin: 0;
+  overflow: hidden;
 }
 
-.hidden {
-  display: none;
+/* text of titles */
+text.title {
+  font-size: 15px;
+  font-weight: bold;
+  fill: black;
+}
+
+/* text of both axes */
+.tick text {
+  font-size: 10px;
 }
