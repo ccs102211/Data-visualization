@@ -15,3 +15,12 @@ text.title {
 .tick text {
   font-size: 10px;
 }
+
+circle {
+  stroke: none;
+  fill-opacity: 0.7;
+}
+
+circle.selected {
+  fill-opacity: 1;
+}
