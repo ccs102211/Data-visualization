@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stacked Bar Charts: World University Rankings</title>
+  <link rel="stylesheet" href="312554023.css">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+
+<body>
+
+  <div id="options">
+    <label><input type="checkbox" value="teaching" checked> Teaching</label>
+    <label><input type="checkbox" value="research" checked> Research</label>
+    <label><input type="checkbox" value="citations" checked> Citations</label>
+    <label><input type="checkbox" value="industryIncome" checked> Industry Income</label>
+    <label><input type="checkbox" value="international" checked> International</label>
+    <label><input type="checkbox" value="overallScores" checked> Overall Scores</label>
+    <button onclick="updateChart()">Update Chart</button>
+  </div>
+
+  <!-- SVG畫布的定義 -->
+  <svg width="800" height="600"></svg>
+
+  <script src="312554023.js"></script>
+</body>
+
+</html>
