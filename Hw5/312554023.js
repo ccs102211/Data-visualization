@@ -39,7 +39,7 @@ function updateChart() {
 
   let selectedCategory = getSelectedCategory();
 
-  d3.csv("./TIMES_WorldUniversityRankings_2024.csv", function (d) {
+  d3.csv("http://vis.lab.djosix.com:2023/data/TIMES_WorldUniversityRankings_2024.csv", function (d) {
     let teaching = +d.scores_teaching;
     let research = +d.scores_research;
     let citations = +d.scores_citations;
