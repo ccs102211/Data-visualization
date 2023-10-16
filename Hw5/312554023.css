@@ -3,9 +3,12 @@ svg {
     background-color: #f9f9f9;
 }
 
-#chartContainer {
-    display: flex;
+.chart-container {
+    height: 300px;
+    /* 或其他您想要的高度 */
+    overflow-y: auto;
 }
+
 
 #rankings {
     margin-right: 20px;

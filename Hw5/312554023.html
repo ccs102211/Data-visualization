@@ -12,6 +12,11 @@
 
 <body>
 
+  <select id="orientationSelect">
+    <option value="horizontal">Horizontal</option>
+    <option value="vertical">Vertical</option>
+  </select>
+
   <select id="categorySelect">
     <option value="overallScores">Overall Scores</option>
     <option value="teaching">Teaching</option>
@@ -28,7 +33,6 @@
   <br>
 
   <div id="chartContainer">
-    <div id="rankings"></div>
     <div id="svgContainer" style="height: 900px; overflow-y: auto;">
       <svg width="1850"></svg>
     </div>
