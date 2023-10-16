@@ -21,6 +21,18 @@ function getOrientation() {
   return document.getElementById("orientationSelect").value;
 }
 
+function recalculateOverallScores(data) {
+  data.forEach(d => {
+    d.overallScores = 0;
+    ["teaching", "research", "citations", "industryIncome", "international"].forEach(cat => {
+      let checkboxElem = document.querySelector('.categoryCheckbox[value="' + cat + '"]');
+      if (checkboxElem && checkboxElem.checked) {
+        d.overallScores += d[cat];
+      }
+    });
+  });
+}
+
 function updateChart() {
   let svg = d3.select("svg");
   svg.selectAll("*").remove();
@@ -45,9 +57,11 @@ function updateChart() {
       citations: citations,
       industryIncome: industryIncome,
       international: international,
-      overallScores: (teaching + research + citations + industryIncome + international)
+      //overallScores: (teaching + research + citations + industryIncome + international)
     };
   }).then(function (data) {
+
+    recalculateOverallScores(data);
     let svg = d3.select("svg");
     let category = getSelectedCategory();
     let sortType = getSortOrder();
@@ -69,40 +83,46 @@ function updateChart() {
       data.forEach(d => {
         let previousWidth = 0;
         ["teaching", "research", "citations", "industryIncome", "international"].forEach(cat => {
-          d[cat + "Width"] = previousWidth;
-          previousWidth += x(d[cat]);
+          let checkboxElem = document.querySelector('.categoryCheckbox[value="' + cat + '"]');
+          if (checkboxElem && checkboxElem.checked) {
+            d[cat + "Width"] = previousWidth;
+            previousWidth += x(d[cat]);
+          }
         });
       });
 
       ["teaching", "research", "citations", "industryIncome", "international"].forEach(cat => {
-        svg.append("g")
-          .attr("transform", `translate(${0}, ${margin.top})`)
-          .selectAll("rect." + cat)
-          .data(data)
-          .enter().append("rect")
-          .attr("class", cat)
-          .attr("y", d => y(d.university))
-          .attr("x", d => margin.left + d[cat + "Width"])
-          .attr("height", y.bandwidth())
-          .attr("width", d => x(d[cat]))
-          .attr("fill", categoryColors[cat])
-          .on("mouseover", function (event, d) {
-            tooltip.transition()
-              //.duration(200)
-              .style("opacity", .9);
+        let checkboxElem = document.querySelector('.categoryCheckbox[value="' + cat + '"]');
+        if (checkboxElem && checkboxElem.checked) {
+          svg.append("g")
+            .attr("transform", `translate(${0}, ${margin.top})`)
+            .selectAll("rect." + cat)
+            .data(data)
+            .enter().append("rect")
+            .attr("class", cat)
+            .attr("y", d => y(d.university))
+            .attr("x", d => margin.left + d[cat + "Width"])
+            .attr("height", y.bandwidth())
+            .attr("width", d => x(d[cat]))
+            .attr("fill", categoryColors[cat])
+            .on("mouseover", function (event, d) {
+              tooltip.transition()
+                //.duration(200)
+                .style("opacity", .9);
 
-            let currentCategory = this.getAttribute("class");
-            let score = d[currentCategory];
+              let currentCategory = this.getAttribute("class");
+              let score = d[currentCategory];
 
-            tooltip.html("<strong>Category:</strong> " + currentCategory + "<br><strong>Score:</strong> " + score)
-              .style("left", (event.pageX + 10) + "px")
-              .style("top", (event.pageY - 40) + "px");
-          })
-          .on("mouseout", function (d) {
-            tooltip.transition()
-              //.duration(500)
-              .style("opacity", 0);
-          });
+              tooltip.html("<strong>Category:</strong> " + currentCategory + "<br><strong>Score:</strong> " + score)
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 40) + "px");
+            })
+            .on("mouseout", function (d) {
+              tooltip.transition()
+                //.duration(500)
+                .style("opacity", 0);
+            });
+        }
       });
 
       svg.append("text")
@@ -160,40 +180,46 @@ function updateChart() {
       data.forEach(d => {
         let accumulatedHeight = 0;
         ["teaching", "research", "citations", "industryIncome", "international"].forEach(cat => {
-          d[cat + "Start"] = accumulatedHeight;
-          d[cat + "Height"] = y(0) - y(d[cat]);
-          accumulatedHeight += d[cat + "Height"];
+          let checkboxElem = document.querySelector('.categoryCheckbox[value="' + cat + '"]');
+          if (checkboxElem && checkboxElem.checked) {
+            d[cat + "Start"] = accumulatedHeight;
+            d[cat + "Height"] = y(0) - y(d[cat]);
+            accumulatedHeight += d[cat + "Height"];
+          }
         });
       });
 
       ["teaching", "research", "citations", "industryIncome", "international"].forEach(cat => {
-        svg.append("g")
-          .attr("transform", `translate(${margin.left}, ${margin.top})`)
-          .selectAll("rect." + cat)
-          .data(data)
-          .enter().append("rect")
-          .attr("class", cat)
-          .attr("x", d => x(d.university))
-          .attr("y", d => y(0) - d[cat + "Start"] - d[cat + "Height"])
-          .attr("width", x.bandwidth())
-          .attr("height", d => d[cat + "Height"])
-          .attr("fill", categoryColors[cat]).on("mouseover", function (event, d) {
-            tooltip.transition()
-              //.duration(200)
-              .style("opacity", .9);
+        let checkboxElem = document.querySelector('.categoryCheckbox[value="' + cat + '"]');
+        if (checkboxElem && checkboxElem.checked) {
+          svg.append("g")
+            .attr("transform", `translate(${margin.left}, ${margin.top})`)
+            .selectAll("rect." + cat)
+            .data(data)
+            .enter().append("rect")
+            .attr("class", cat)
+            .attr("x", d => x(d.university))
+            .attr("y", d => y(0) - d[cat + "Start"] - d[cat + "Height"])
+            .attr("width", x.bandwidth())
+            .attr("height", d => d[cat + "Height"])
+            .attr("fill", categoryColors[cat]).on("mouseover", function (event, d) {
+              tooltip.transition()
+                //.duration(200)
+                .style("opacity", .9);
 
-            let currentCategory = this.getAttribute("class");
-            let score = d[currentCategory];
+              let currentCategory = this.getAttribute("class");
+              let score = d[currentCategory];
 
-            tooltip.html("<strong>Category:</strong> " + currentCategory + "<br><strong>Score:</strong> " + score)
-              .style("left", (event.pageX + 10) + "px")
-              .style("top", (event.pageY - 40) + "px");
-          })
-          .on("mouseout", function (d) {
-            tooltip.transition()
-              //.duration(500)
-              .style("opacity", 0);
-          });
+              tooltip.html("<strong>Category:</strong> " + currentCategory + "<br><strong>Score:</strong> " + score)
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 40) + "px");
+            })
+            .on("mouseout", function (d) {
+              tooltip.transition()
+                //.duration(500)
+                .style("opacity", 0);
+            });
+        }
       });
 
       let xAxis = d3.axisBottom(x);
@@ -240,6 +266,12 @@ function updateChart() {
 document.getElementById("categorySelect").addEventListener("change", updateChart);
 document.getElementById("sortSelect").addEventListener("change", updateChart);
 document.getElementById("orientationSelect").addEventListener("change", updateChart);
+document.querySelectorAll('.categoryCheckbox').forEach(checkbox => {
+  checkbox.addEventListener('change', function () {
+    updateChart();  // 更新圖表
+  });
+});
+
 
 
 
