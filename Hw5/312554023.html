@@ -12,33 +12,41 @@
 
 <body>
 
-  <select id="orientationSelect">
-    <option value="horizontal">Horizontal</option>
-    <option value="vertical">Vertical</option>
-  </select>
+  <span>呈現方式(水平 or 垂直)
+    <select id="orientationSelect">
+      <option value="horizontal">Horizontal</option>
+      <option value="vertical">Vertical</option>
+    </select>
+  </span>
 
-  <select id="categorySelect">
-    <option value="overallScores">Overall Scores</option>
-    <option value="teaching">Teaching</option>
-    <option value="research">Research</option>
-    <option value="citations">Citations</option>
-    <option value="industryIncome">Industry Income</option>
-    <option value="international">International</option>
-  </select>
+  <span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;根據甚麼類別進行sorting
+    <select id="categorySelect">
+      <option value="overallScores">Overall Scores</option>
+      <option value="teaching">Teaching</option>
+      <option value="research">Research</option>
+      <option value="citations">Citations</option>
+      <option value="industryIncome">Industry Income</option>
+      <option value="international">International</option>
+    </select>
+  </span>
 
-  <select id="sortSelect">
-    <option value="descending">Descending</option>
-    <option value="ascending">Ascending</option>
-  </select>
+  <span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ascending or descending
+    <select id="sortSelect">
+      <option value="descending">Descending</option>
+      <option value="ascending">Ascending</option>
+    </select>
+  </span>
+
   <br>
-
-  <div id="categorySelectors">
-    <label><input type="checkbox" class="categoryCheckbox" value="teaching" checked> Teaching</label>
-    <label><input type="checkbox" class="categoryCheckbox" value="research" checked> Research</label>
-    <label><input type="checkbox" class="categoryCheckbox" value="citations" checked> Citations</label>
-    <label><input type="checkbox" class="categoryCheckbox" value="industryIncome" checked> Industry Income</label>
-    <label><input type="checkbox" class="categoryCheckbox" value="international" checked> International</label>
-  </div>
+  <span> 選擇總分計算方式
+    <div id="categorySelectors">
+      <label><input type="checkbox" class="categoryCheckbox" value="teaching" checked> Teaching</label>
+      <label><input type="checkbox" class="categoryCheckbox" value="research" checked> Research</label>
+      <label><input type="checkbox" class="categoryCheckbox" value="citations" checked> Citations</label>
+      <label><input type="checkbox" class="categoryCheckbox" value="industryIncome" checked> Industry Income</label>
+      <label><input type="checkbox" class="categoryCheckbox" value="international" checked> International</label>
+    </div>
+  </span>
 
 
   <div id="chartContainer">
