@@ -58,13 +58,13 @@ function updateChart() {
 
     if (orientation === "horizontal") {
       let height = data.length * 22;
-      let margin = { top: 40, right: 50, bottom: 30, left: 350 };  // 修改左側邊距
+      let margin = { top: 40, right: 50, bottom: 30, left: 350 };
       svg.attr("height", height + margin.top + margin.bottom);
       svg.attr("width", 1450 + margin.left + margin.right);
       let width = 1850 - margin.left - margin.right;
       let xMax = d3.max(data, d => d.overallScores);
       let y = d3.scaleBand().domain(data.map(d => d.university)).range([0, height]).padding(0.4);
-      let x = d3.scaleLinear().domain([0, xMax]).range([0, width]);  // 使用xMax作為domain的上限
+      let x = d3.scaleLinear().domain([0, xMax]).range([0, width]);
 
       data.forEach(d => {
         let previousWidth = 0;
@@ -91,7 +91,6 @@ function updateChart() {
               //.duration(200)
               .style("opacity", .9);
 
-            // 這裡獲取當前類別和分數
             let currentCategory = this.getAttribute("class");
             let score = d[currentCategory];
 
@@ -107,7 +106,7 @@ function updateChart() {
       });
 
       svg.append("text")
-        .attr("x", margin.left - 150) // 調整至左邊合適的位置，與學校名稱齊平
+        .attr("x", margin.left - 150)
         .attr("y", margin.top - 10)
         .attr("font-weight", "bold")
         .text("School");
@@ -118,15 +117,14 @@ function updateChart() {
         .data(data)
         .enter().append("text")
         .attr("y", d => y(d.university) + y.bandwidth() / 2 + 2)
-        .attr("x", margin.left - 330)  // 將數字向左側移動50像素
+        .attr("x", margin.left - 330)
         .attr("alignment-baseline", "middle")
         .attr("font-size", "16px")
         .attr("font-weight", "bold")
-        .text((d, i) => i + 1);  // i + 1 將會顯示排序序號
+        .text((d, i) => i + 1);
 
-      // 在橫條圖的右側加上該大學在所選分類下的得分
       svg.append("g")
-        .attr("transform", `translate(${0}, ${margin.top})`)  // Add this line
+        .attr("transform", `translate(${0}, ${margin.top})`)
         .selectAll(".scoreText")
         .data(data)
         .enter().append("text")
@@ -134,9 +132,9 @@ function updateChart() {
         .attr("x", d => margin.left + x(d.overallScores) + 5)
         .attr("alignment-baseline", "middle")
         .attr("font-size", "10px")
-        .text(d => d.overallScores.toFixed(2)); // 將得分四捨五入到小數點後兩位
+        .text(d => d.overallScores.toFixed(2));
 
-      let yAxis = d3.axisLeft(y).tickSize(0); // Removing tick size for a cleaner look
+      let yAxis = d3.axisLeft(y).tickSize(0);
       let xAxis = d3.axisTop(x);
 
       svg.append("g")
@@ -151,12 +149,11 @@ function updateChart() {
     else if (orientation === "vertical") {
       let margin = { top: 50, right: 50, bottom: 200, left: 90 };
       let height = 600;
-      let width = data.length * 26; // 假設每一條 bar 的寬度為 22
+      let width = data.length * 26;
       svg.attr("height", 750 + margin.top + margin.bottom);
       svg.attr("width", width + margin.left + margin.right + 400);
-      let xMax = d3.max(data, d => d.overallScores);  // 根據數據動態設定X軸的最大值
+      let xMax = d3.max(data, d => d.overallScores);
 
-      // 更新比例尺的定義
       let x = d3.scaleBand().domain(data.map(d => d.university)).range([0, width]).padding(0.6);
       let y = d3.scaleLinear().domain([0, xMax]).range([height, 0]);
 
@@ -164,8 +161,8 @@ function updateChart() {
         let accumulatedHeight = 0;
         ["teaching", "research", "citations", "industryIncome", "international"].forEach(cat => {
           d[cat + "Start"] = accumulatedHeight;
-          d[cat + "Height"] = y(0) - y(d[cat]); // Calculate the height for this segment
-          accumulatedHeight += d[cat + "Height"]; // Add the height to the accumulated height
+          d[cat + "Height"] = y(0) - y(d[cat]);
+          accumulatedHeight += d[cat + "Height"];
         });
       });
 
@@ -177,7 +174,7 @@ function updateChart() {
           .enter().append("rect")
           .attr("class", cat)
           .attr("x", d => x(d.university))
-          .attr("y", d => y(0) - d[cat + "Start"] - d[cat + "Height"])  // Starts from the bottom and subtracts the accumulated height
+          .attr("y", d => y(0) - d[cat + "Start"] - d[cat + "Height"])
           .attr("width", x.bandwidth())
           .attr("height", d => d[cat + "Height"])
           .attr("fill", categoryColors[cat]).on("mouseover", function (event, d) {
@@ -185,7 +182,6 @@ function updateChart() {
               //.duration(200)
               .style("opacity", .9);
 
-            // 這裡獲取當前類別和分數
             let currentCategory = this.getAttribute("class");
             let score = d[currentCategory];
 
@@ -207,33 +203,31 @@ function updateChart() {
         .attr("transform", `translate(${margin.left}, ${margin.top})`)
         .call(yAxis);
 
-      // 在bar的上方顯示相對應的分數
       data.forEach((d, i) => {
         svg.append("text")
           .attr("x", x(d.university) + x.bandwidth() / 2 + margin.left + 30)
-          .attr("y", y(d.overallScores) - 15 + margin.top)  // 將文字位置設定在bar的上方一點
-          .text(d.overallScores.toFixed(2))  // 顯示分數
-          .style("text-anchor", "end") // 修改錨點以保持旋轉後的正確對齊
-          .attr("transform", `rotate(-45, ${x(d.university) + x.bandwidth() / 2 + margin.left}, ${y(d.overallScores) - 5 + margin.top})`) // 對每個分數文字旋轉
+          .attr("y", y(d.overallScores) - 15 + margin.top)
+          .text(d.overallScores.toFixed(2))
+          .style("text-anchor", "end")
+          .attr("transform", `rotate(-45, ${x(d.university) + x.bandwidth() / 2 + margin.left}, ${y(d.overallScores) - 5 + margin.top})`)
           .style("font-size", "12px");
       });
 
       svg.append("g")
         .attr("transform", `translate(${margin.left}, ${height + margin.top})`)
         .call(xAxis)
-        .selectAll("text")   // 選擇所有坐標軸上的文字
-        .attr("transform", "rotate(-45)")  // 將文字旋轉-45度
-        .style("text-anchor", "end")       // 重新設定文字的錨點，使其不會超出圖表範圍
-        .attr("dx", "-.8em")               // 調整文字的位置
+        .selectAll("text")
+        .attr("transform", "rotate(-45)")
+        .style("text-anchor", "end")
+        .attr("dx", "-.8em")
         .attr("dy", ".15em");
 
-      // 在x軸的學校名稱下方加入對應的順序
       data.forEach((d, i) => {
         svg.append("text")
           .attr("x", x(d.university) + x.bandwidth() / 2 + margin.left)
-          .attr("y", height + margin.top + 250)  // 將文字位置設定在x軸的名稱下方
-          .text(i + 1)  // 顯示順序
-          .style("text-anchor", "middle")  // 設定文字的錨點在中間，使其居中
+          .attr("y", height + margin.top + 250)
+          .text(i + 1)
+          .style("text-anchor", "middle")
           .style("font-size", "10px");
       });
     }

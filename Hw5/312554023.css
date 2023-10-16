@@ -5,16 +5,13 @@ svg {
 
 .chart-container {
     height: 300px;
-    /* 或其他您想要的高度 */
     overflow-y: auto;
 }
 
 
 #rankings {
     margin-right: 20px;
-    /* Adjust as needed */
     white-space: nowrap;
-    /* This prevents school names from wrapping to the next line */
 }
 
 .tooltip {
