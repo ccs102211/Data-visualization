@@ -2,3 +2,22 @@ svg {
     border: 1px solid black;
     background-color: #f9f9f9;
 }
+
+#chartContainer {
+    display: flex;
+}
+
+#rankings {
+    margin-right: 20px;
+    /* Adjust as needed */
+    white-space: nowrap;
+    /* This prevents school names from wrapping to the next line */
+}
+
+.tooltip {
+    z-index: 9999;
+    position: absolute;
+    padding: 10px;
+    background-color: white;
+    border: 1px solid black;
+}

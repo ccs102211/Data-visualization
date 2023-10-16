@@ -1,17 +1,28 @@
-function getSelectedCategories() {
-  let checkboxes = document.querySelectorAll("#options input[type='checkbox']:checked");
-  let selected = [];
-  checkboxes.forEach(cb => {
-    selected.push(cb.value);
-  });
-  return selected;
+const categoryColors = {
+  teaching: "blue",
+  research: "green",
+  citations: "orange",
+  industryIncome: "purple",
+  international: "pink"
+};
+
+let tooltip = d3.select("body").append("div")
+  .attr("class", "tooltip")
+  .style("opacity", 0);
+
+function getSelectedCategory() {
+  return document.getElementById("categorySelect").value;
+}
+
+function getSortOrder() {
+  return document.getElementById("sortSelect").value;
 }
 
 function updateChart() {
   let svg = d3.select("svg");
-  svg.selectAll("*").remove(); // 清除原有的图表元素
+  svg.selectAll("*").remove();
 
-  let selectedCategories = getSelectedCategories();
+  let selectedCategory = getSelectedCategory();
 
   d3.csv("./TIMES_WorldUniversityRankings_2024.csv", function (d) {
     let teaching = +d.scores_teaching;
@@ -20,9 +31,8 @@ function updateChart() {
     let industryIncome = +d.scores_industry_income;
     let international = +d.scores_international_outlook;
 
-    // 检查是否任何字段是NaN
     if (isNaN(teaching) || isNaN(research) || isNaN(citations) || isNaN(industryIncome) || isNaN(international)) {
-      return null; // 如果有NaN，则排除此数据条目
+      return null;
     }
 
     return {
@@ -35,38 +45,125 @@ function updateChart() {
       overallScores: (teaching + research + citations + industryIncome + international)
     };
   }).then(function (data) {
-    data = data.slice(0, 10);
-
-    let margin = { top: 20, right: 20, bottom: 30, left: 40 };
+    let svg = d3.select("svg");
+    let margin = { top: 40, right: 50, bottom: 30, left: 350 };  // 修改左側邊距
     let width = +svg.attr("width") - margin.left - margin.right;
-    let height = +svg.attr("height") - margin.top - margin.bottom;
+    let height = data.length * 22;
 
-    let colors = d3.scaleOrdinal(d3.schemeCategory10);
+    let category = getSelectedCategory();
+    let sortType = getSortOrder();
 
-    let stackedData = d3.stack().keys(selectedCategories)(data);
+    data.sort((a, b) => (sortType === "ascending" ? a[category] - b[category] : b[category] - a[category]));
 
-    let x = d3.scaleBand().domain(data.map(d => d.university)).rangeRound([0, width]).paddingInner(0.1);
-    let y = d3.scaleLinear().domain([0, d3.max(stackedData, d => d3.max(d, d => d[1]))]).rangeRound([height, 0]);
-    let z = d3.scaleOrdinal().domain(selectedCategories).range(d3.schemeCategory10);
+    svg.attr("height", height + margin.top + margin.bottom);
 
-    svg.selectAll("g")
-      .data(stackedData)
-      .enter().append("g")
-      .attr("fill", d => z(d.key))
-      .selectAll("rect")
-      .data(d => d)
-      .enter().append("rect")
-      .attr("x", d => x(d.data.university))
-      .attr("y", d => y(d[1]))
-      .attr("height", d => y(d[0]) - y(d[1]))
-      .attr("width", x.bandwidth());
+    let xMax = d3.max(data, d => d[category]);  // 根據數據動態設定X軸的最大值
+    let y = d3.scaleBand().domain(data.map(d => d.university)).range([0, height]).padding(0.4);
+    let x = d3.scaleLinear().domain([0, xMax]).range([0, width]);  // 使用xMax作為domain的上限
+
+    if (category === "overallScores") {
+      data.forEach(d => {
+        let previousWidth = 0;
+        ["teaching", "research", "citations", "industryIncome", "international"].forEach(cat => {
+          d[cat + "Width"] = previousWidth;
+          previousWidth += x(d[cat]);
+        });
+      });
+
+      ["teaching", "research", "citations", "industryIncome", "international"].forEach(cat => {
+        svg.append("g")
+          .attr("transform", `translate(${0}, ${margin.top})`)
+          .selectAll("rect." + cat)
+          .data(data)
+          .enter().append("rect")
+          .attr("class", cat)
+          .attr("y", d => y(d.university))
+          .attr("x", d => margin.left + d[cat + "Width"])
+          .attr("height", y.bandwidth())
+          .attr("width", d => x(d[cat]))
+          .attr("fill", categoryColors[cat])
+          .on("mouseover", function (event, d) {
+            tooltip.transition()
+              //.duration(200)
+              .style("opacity", .9);
+
+            // 這裡獲取當前類別和分數
+            let currentCategory = this.getAttribute("class");
+            let score = d[currentCategory];
+
+            tooltip.html("<strong>Category:</strong> " + currentCategory + "<br><strong>Score:</strong> " + score)
+              .style("left", (event.pageX + 10) + "px")
+              .style("top", (event.pageY - 40) + "px");
+          })
+          .on("mouseout", function (d) {
+            tooltip.transition()
+              //.duration(500)
+              .style("opacity", 0);
+          });
+      });
+    } else {
+      svg.append("g")
+        .attr("transform", `translate(${0}, ${margin.top})`)
+        .selectAll("rect")
+        .data(data)
+        .enter().append("rect")
+        .attr("y", d => y(d.university))
+        .attr("x", margin.left)
+        .attr("height", y.bandwidth())
+        .attr("width", d => x(d[category]))
+        .attr("fill", categoryColors[category]);
+    }
+
+    svg.append("text")
+      .attr("x", margin.left - 150) // 調整至左邊合適的位置，與學校名稱齊平
+      .attr("y", margin.top - 10)
+      .attr("font-weight", "bold")
+      .text("School");
+
+    svg.append("g")
+      .attr("transform", `translate(${0}, ${margin.top})`)
+      .selectAll(".rankText")
+      .data(data)
+      .enter().append("text")
+      .attr("y", d => y(d.university) + y.bandwidth() / 2 + 2)
+      .attr("x", margin.left - 330)  // 將數字向左側移動50像素
+      .attr("alignment-baseline", "middle")
+      .attr("font-size", "16px")
+      .attr("font-weight", "bold")
+      .text((d, i) => i + 1);  // i + 1 將會顯示排序序號
+
+    // 在橫條圖的右側加上該大學在所選分類下的得分
+    svg.append("g")
+      .attr("transform", `translate(${0}, ${margin.top})`)  // Add this line
+      .selectAll(".scoreText")
+      .data(data)
+      .enter().append("text")
+      .attr("y", d => y(d.university) + y.bandwidth() / 2)
+      .attr("x", d => margin.left + x(d[category]) + 5)
+      .attr("alignment-baseline", "middle")
+      .attr("font-size", "10px")
+      .text(d => d[category].toFixed(2)); // 將得分四捨五入到小數點後兩位
+
+    let yAxis = d3.axisLeft(y).tickSize(0); // Removing tick size for a cleaner look
+    let xAxis = d3.axisTop(x);
+
+    svg.append("g")
+      .attr("transform", `translate(${margin.left}, ${margin.top})`)
+      .attr("alignment-baseline", "middle")
+      .call(yAxis);
+
+    svg.append("g")
+      .attr("transform", `translate(${margin.left}, ${margin.top})`)
+      .call(xAxis);
   });
 }
 
-// 當複選框變更時呼叫 updateChart
-document.querySelectorAll("#options input[type='checkbox']").forEach(cb => {
-  cb.addEventListener("change", updateChart);
-});
+
+
+// 當下拉選單變更時呼叫 updateChart
+document.getElementById("categorySelect").addEventListener("change", updateChart);
+document.getElementById("sortSelect").addEventListener("change", updateChart);
+
 
 // 初始加载时调用
 updateChart();

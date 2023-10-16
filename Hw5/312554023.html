@@ -7,22 +7,33 @@
   <title>Stacked Bar Charts: World University Rankings</title>
   <link rel="stylesheet" href="312554023.css">
   <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://unpkg.com/d3-tip@0.9.1"></script>
 </head>
 
 <body>
 
-  <div id="options">
-    <label><input type="checkbox" value="teaching" checked> Teaching</label>
-    <label><input type="checkbox" value="research" checked> Research</label>
-    <label><input type="checkbox" value="citations" checked> Citations</label>
-    <label><input type="checkbox" value="industryIncome" checked> Industry Income</label>
-    <label><input type="checkbox" value="international" checked> International</label>
-    <label><input type="checkbox" value="overallScores" checked> Overall Scores</label>
-    <button onclick="updateChart()">Update Chart</button>
+  <select id="categorySelect">
+    <option value="overallScores">Overall Scores</option>
+    <option value="teaching">Teaching</option>
+    <option value="research">Research</option>
+    <option value="citations">Citations</option>
+    <option value="industryIncome">Industry Income</option>
+    <option value="international">International</option>
+  </select>
+
+  <select id="sortSelect">
+    <option value="descending">Descending</option>
+    <option value="ascending">Ascending</option>
+  </select>
+  <br>
+
+  <div id="chartContainer">
+    <div id="rankings"></div>
+    <div id="svgContainer" style="height: 900px; overflow-y: auto;">
+      <svg width="1850"></svg>
+    </div>
   </div>
 
-  <!-- SVG畫布的定義 -->
-  <svg width="800" height="600"></svg>
 
   <script src="312554023.js"></script>
 </body>
