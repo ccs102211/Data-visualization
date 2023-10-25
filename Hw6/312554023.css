@@ -5,3 +5,7 @@
     padding: 10px;
     opacity: 0;
 }
+
+path {
+    pointer-events: all;
+}

@@ -69,18 +69,35 @@ d3.csv("http://vis.lab.djosix.com:2023/data/ma_lga_12345.csv").then(data => {
       let bedroomColor = bedroomColorScale(bedrooms);
       return d3.interpolateRgb(typeColor, bedroomColor)(0.5);
     })
-    .on("mouseover", (event, d) => {
-      let parentNodeData = d3.select(event.currentTarget.parentNode).datum();
-      // 根據您的數據結構，取第一個對象的medianPrice作為示例
-      let medianPriceValue = d[0].medianPrice;
-      let tooltip = d3.select(".tooltip");
-      tooltip.style("opacity", 1);
-      tooltip.html(`類型: ${parentNodeData.key.split("_")[0]}<br>臥室數: ${parentNodeData.key.split("_")[1]}<br>中位價格: ${medianPriceValue}`);
+    .on("mousemove", (event, d) => {
+      let mouseX = d3.pointer(event, event.currentTarget)[0];
+      let hoverDate = xScale.invert(mouseX);
+
+      let closestDataPoint = d.reduce((prev, curr) => {
+        return (Math.abs(curr.date - hoverDate) < Math.abs(prev.date - hoverDate) ? curr : prev);
+      });
+      if (closestDataPoint) {
+        let parentNode = d3.select(event.currentTarget.parentNode);
+        let parentNodeData = parentNode.datum();
+        let medianPriceValue = closestDataPoint.medianPrice;
+        let tooltip = d3.select(".tooltip");
+        tooltip.style("opacity", 1)
+          .style("left", (event.pageX + 10) + "px")
+          .style("top", (event.pageY - 10) + "px")
+          .html(`類型: ${parentNodeData.key.split("_")[0]}<br>臥室數: ${parentNodeData.key.split("_")[1]}<br>中位價格: ${medianPriceValue}`);
+      }
+      console.log("Mouse coordinates:", d3.pointer(event, event.currentTarget));
+      console.log("Hover Date:", hoverDate);
+      console.log("Data:", d);
+      console.log("Closest Data Point:", closestDataPoint);
+
+
     })
     .on("mouseout", () => {
       let tooltip = d3.select(".tooltip");
       tooltip.style("opacity", 0);
     });
+
 
   // 添加按鈕來觸發流的重新排序
   let dropdown = d3.select("body").append("select").on("change", reorderStreams);
