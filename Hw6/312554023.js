@@ -1,3 +1,5 @@
+let colorMapping = {};
+
 d3.csv("http://vis.lab.djosix.com:2023/data/ma_lga_12345.csv").then(data => {
 
   // 數據轉換
@@ -56,18 +58,26 @@ d3.csv("http://vis.lab.djosix.com:2023/data/ma_lga_12345.csv").then(data => {
   //.datum(d => d.values);  // 使用.datum()绑定d.values数组
 
 
+  // 當繪製每一層的path時：
   layers.selectAll("path")
     .data(d => [d.values])
     .enter().append("path")
     .attr("d", areaGenerator)
     .attr("fill", function (d, i, nodes) {
       let parentNodeData = d3.select(nodes[i].parentNode).datum();
-      let parts = parentNodeData.key.split("_");
-      let type = parts[0];
-      let bedrooms = +parts[1];
-      let typeColor = typeColorScale(type);
-      let bedroomColor = bedroomColorScale(bedrooms);
-      return d3.interpolateRgb(typeColor, bedroomColor)(0.5);
+      let key = parentNodeData.key;
+
+      // 如果這個key的顏色尚未被計算，則計算並儲存它
+      if (!colorMapping[key]) {
+        let parts = key.split("_");
+        let type = parts[0];
+        let bedrooms = +parts[1];
+        let typeColor = typeColorScale(type);
+        let bedroomColor = bedroomColorScale(bedrooms);
+        colorMapping[key] = d3.interpolateRgb(typeColor, bedroomColor)(0.5);
+      }
+
+      return colorMapping[key];
     })
     .on("mousemove", (event, d) => {
       let mouseX = d3.pointer(event, event.currentTarget)[0];
@@ -132,6 +142,7 @@ d3.csv("http://vis.lab.djosix.com:2023/data/ma_lga_12345.csv").then(data => {
         break;
       default:
         break;
+
     }
 
     // 更新每個流的位置
@@ -140,6 +151,16 @@ d3.csv("http://vis.lab.djosix.com:2023/data/ma_lga_12345.csv").then(data => {
       .selectAll("path")
       .data(d => [d.values])
       .attr("d", areaGenerator);
+
+    container.selectAll(".layer")
+      .data(processedData)
+      .selectAll("path")
+      .style("fill", function (d, i, nodes) {
+        let parentNodeData = d3.select(nodes[i].parentNode).datum();
+        let key = parentNodeData.key;
+        return colorMapping[key];
+      });
+
   }
 
   // 添加輔助線
@@ -185,6 +206,29 @@ d3.csv("http://vis.lab.djosix.com:2023/data/ma_lga_12345.csv").then(data => {
     .style("text-anchor", "end")
     .text(function (d) { return d; });
 
+  // 創建多選框
+  let streamSelectionDiv = d3.select("#streamSelection");
+  processedData.forEach((stream, index) => {
+    let checkboxWrapper = streamSelectionDiv.append("div");
+    checkboxWrapper.append("input")
+      .attr("type", "checkbox")
+      .attr("checked", true)
+      .attr("id", "streamCheckbox" + index)
+      .on("change", function () {
+        let isSelected = d3.select(this).property("checked");
+        if (isSelected) {
+          container.select(".layer:nth-child(" + (index + 1) + ")").style("display", "block");
+        } else {
+          container.select(".layer:nth-child(" + (index + 1) + ")").style("display", "none");
+        }
+      });
+    checkboxWrapper.append("label")
+      .attr("for", "streamCheckbox" + index)
+      .text(stream.key);
+  });
+
+
 }).catch(error => {
   console.log("加載數據時出錯:", error);
 });
+

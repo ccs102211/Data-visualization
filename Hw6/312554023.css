@@ -9,3 +9,15 @@
 path {
     pointer-events: all;
 }
+
+.checkbox-container {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+.checkbox-container>div {
+    display: inline-block;
+    margin-right: 15px;
+}
