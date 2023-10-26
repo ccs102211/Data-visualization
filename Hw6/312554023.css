@@ -21,3 +21,15 @@ path {
     display: inline-block;
     margin-right: 15px;
 }
+
+.streamCheckbox {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+.streamCheckbox>div {
+    display: inline-block;
+    margin-right: 15px;
+}

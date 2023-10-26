@@ -1,234 +1,143 @@
-let colorMapping = {};
+const graphDimensions = {
+  width: 1200,
+  height: 860,
+  margin: { top: 20, right: 60, bottom: 40, left: 60 }
+};
 
-d3.csv("http://vis.lab.djosix.com:2023/data/ma_lga_12345.csv").then(data => {
+const graphWidth = graphDimensions.width - graphDimensions.margin.left - graphDimensions.margin.right;
+const graphHeight = graphDimensions.height - graphDimensions.margin.top - graphDimensions.margin.bottom;
 
-  // 數據轉換
-  let parseDate = d3.timeParse("%d/%m/%Y");
-  data.forEach(d => {
-    d.saledate = parseDate(d.saledate);
-    d.MA = +d.MA;
+const canvas = d3.select("svg")
+  .attr("width", graphDimensions.width)
+  .attr("height", graphDimensions.height)
+  .append("g")
+  .attr("transform", `translate(${graphDimensions.margin.left}, ${graphDimensions.margin.top})`);
+
+function formatDate(input) {
+  const dateComponents = input.split('/');
+  return new Date(dateComponents[2], dateComponents[1] - 1, dateComponents[0]);
+}
+
+function getSelectedStreams() {
+  let selectedKeys = [];
+  d3.selectAll(".streamCheckbox input:checked").each(function () {
+    const key = this.id.replace("streamCheckbox_", "");
+    selectedKeys.push(key);
   });
+  return selectedKeys;
+}
 
-  let typeColorScale = d3.scaleOrdinal(["#1f77b4", "#ff7f0e"]);
-  let bedroomColorScale = d3.scaleSequential(d3.interpolateViridis).domain([1, 5]);
+async function fetchAndProcessData() {
+  let rawData = await d3.csv("http://vis.lab.djosix.com:2023/data/ma_lga_12345.csv");
+  rawData = rawData.filter(d => formatDate(d.saledate) > formatDate('30/09/2007'));
+  rawData.forEach(d => d.saledate = formatDate(d.saledate));
 
-  // 數據分組和聚合
-  let groupedData = d3.group(data, d => d.type + "_" + d.bedrooms);
-
-  let processedData = Array.from(groupedData, ([key, value]) => {
-    let nestedData = d3.group(value, d => d.saledate);
-    let dataArray = Array.from(nestedData, ([dateKey, dateValue]) => {
-      let maValues = dateValue.map(d => d.MA);
-      let medianPrice = d3.median(maValues);
-      return {
-        date: dateKey,
-        lowerBound: medianPrice * 0.9,
-        upperBound: medianPrice * 1.1,
-        medianPrice: medianPrice
-      };
+  return d3.rollups(rawData,
+    v => d3.median(v, d => d.MA),
+    d => d.saledate,
+    d => d.type,
+    d => d.bedrooms
+  ).map(group => {
+    const entry = { saledate: group[0] };
+    group[1].forEach(subGroup => {
+      subGroup[1].forEach(dataPoint => {
+        const keyName = `${subGroup[0]}_${dataPoint[0]}`;
+        entry[keyName] = dataPoint[1];
+      });
     });
-    return { key: key, values: dataArray.sort((a, b) => a.date - b.date) };
+    return entry;
   });
+}
 
-  let svg = d3.select("#themeRiver");
-  let startDate = d3.min(data, d => d.saledate);
-  let endDate = d3.max(data, d => d.saledate);
-  let maxMedianPrice = d3.max(processedData, d => d3.max(d.values, v => v.upperBound));
-  let margin = { top: 50, right: 150, bottom: 50, left: 100 },
-    width = 1600 - margin.left - margin.right,  // SVG的寬度減去左右邊界
-    height = 860 - margin.top - margin.bottom;  // SVG的高度減去上下邊界
+function drawStreamGraph(data) {
+  const selectedKeys = getSelectedStreams();
+  const stackedData = d3.stack().keys(selectedKeys)(data);
+  const keys = Object.keys(data[0]).filter(key => key !== "saledate");
 
-  let xScale = d3.scaleTime().domain([startDate, endDate]).range([0, width]);
-  let yScale = d3.scaleLinear().domain([0, maxMedianPrice]).range([height, 0]);  // 將高度調整為SVG高度減去上下邊界
-  let color = d3.scaleOrdinal(d3.schemeCategory10);
+  canvas.selectAll("*").remove();
 
-  // 添加容器並向右平移
-  let container = svg.append("g").attr("transform", "translate(60, 0)");  // 平移60像素，您可以根據需要進行調整
+  const xScale = d3.scaleTime()
+    .range([0, graphWidth])
+    .domain(d3.extent(data, d => d.saledate));
 
+  const yScale = d3.scaleLinear()
+    .range([graphHeight, 0])
+    .domain([
+      d3.min(stackedData, layer => d3.min(layer, segment => segment[0])),
+      d3.max(stackedData, layer => d3.max(layer, segment => segment[1]))
+    ]);
 
-  let areaGenerator = d3.area()
-    .x(d => xScale(d.date))
-    .y0(d => yScale(d.lowerBound))
-    .y1(d => yScale(d.upperBound));
+  const colorScale = d3.scaleOrdinal()
+    .domain(keys)
+    .range(d3.schemeTableau10);
 
-  let layers = container.selectAll(".layer")
-    .data(processedData)
-    .enter().append("g")
-    .attr("class", "layer")
-  //.datum(d => d.values);  // 使用.datum()绑定d.values数组
+  const tooltip = d3.select("body").append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0);
 
-
-  // 當繪製每一層的path時：
-  layers.selectAll("path")
-    .data(d => [d.values])
+  canvas.selectAll("path")
+    .data(stackedData)
     .enter().append("path")
-    .attr("d", areaGenerator)
-    .attr("fill", function (d, i, nodes) {
-      let parentNodeData = d3.select(nodes[i].parentNode).datum();
-      let key = parentNodeData.key;
+    .style("fill", d => colorScale(d.key))
+    .attr("d", d3.area()
+      .x(d => xScale(d.data.saledate))
+      .y0(d => yScale(d[0]))
+      .y1(d => yScale(d[1]))
+    )
+    .on("mousemove", function (event, d) {
+      const [x, y] = d3.pointer(event);
+      const hoveredDate = xScale.invert(x);
 
-      // 如果這個key的顏色尚未被計算，則計算並儲存它
-      if (!colorMapping[key]) {
-        let parts = key.split("_");
-        let type = parts[0];
-        let bedrooms = +parts[1];
-        let typeColor = typeColorScale(type);
-        let bedroomColor = bedroomColorScale(bedrooms);
-        colorMapping[key] = d3.interpolateRgb(typeColor, bedroomColor)(0.5);
+      const bisectDate = d3.bisector(d => d.saledate).left;
+      const i = bisectDate(data, hoveredDate, 1);
+      const d0 = data[i - 1];
+      const d1 = data[i];
+      const matchedData = hoveredDate - d0.saledate > d1.saledate - hoveredDate ? d1 : d0;
+
+      if (matchedData) {
+        const keyParts = d.key.split("_");
+        const type = keyParts[0];
+        const bedrooms = keyParts[1];
+        const value = matchedData[d.key];
+        const displayDate = d3.timeFormat("%Y-%m-%d")(matchedData.saledate);
+
+        tooltip.transition()
+          .duration(200)
+          .style("opacity", .9);
+        tooltip.html(`Date: ${displayDate}<br/>Type: ${type}<br/>Bedrooms: ${bedrooms}<br/>Value: ${value}`)
+          .style("left", (event.pageX + 5) + "px")
+          .style("top", (event.pageY - 60) + "px");
       }
-
-      return colorMapping[key];
     })
-    .on("mousemove", (event, d) => {
-      let mouseX = d3.pointer(event, event.currentTarget)[0];
-      let hoverDate = xScale.invert(mouseX);
-
-      let closestDataPoint = d.reduce((prev, curr) => {
-        return (Math.abs(curr.date - hoverDate) < Math.abs(prev.date - hoverDate) ? curr : prev);
-      });
-      if (closestDataPoint) {
-        let parentNode = d3.select(event.currentTarget.parentNode);
-        let parentNodeData = parentNode.datum();
-        let medianPriceValue = closestDataPoint.medianPrice;
-        let tooltip = d3.select(".tooltip");
-        tooltip.style("opacity", 1)
-          .style("left", (event.pageX + 10) + "px")
-          .style("top", (event.pageY - 10) + "px")
-          .html(`類型: ${parentNodeData.key.split("_")[0]}<br>臥室數: ${parentNodeData.key.split("_")[1]}<br>中位價格: ${medianPriceValue}`);
-      }
-      console.log("Mouse coordinates:", d3.pointer(event, event.currentTarget));
-      console.log("Hover Date:", hoverDate);
-      console.log("Data:", d);
-      console.log("Closest Data Point:", closestDataPoint);
-
-
-    })
-    .on("mouseout", () => {
-      let tooltip = d3.select(".tooltip");
-      tooltip.style("opacity", 0);
+    .on("mouseout", function () {
+      tooltip.transition()
+        .duration(500)
+        .style("opacity", 0);
     });
 
+  canvas.append("g")
+    .attr("transform", `translate(0, ${graphHeight})`)
+    .call(d3.axisBottom(xScale));
 
-  // 添加按鈕來觸發流的重新排序
-  let dropdown = d3.select("body").append("select").on("change", reorderStreams);
-  dropdown.append("option").attr("value", "max").text("按最大中位價格");
-  dropdown.append("option").attr("value", "min").text("按最小中位價格");
-  dropdown.append("option").attr("value", "avg").text("按平均中位價格");
+  canvas.append("g")
+    .call(d3.axisLeft(yScale));
 
-  function reorderStreams() {
-    let orderType = dropdown.node().value;
-
-    switch (orderType) {
-      case 'max':
-        processedData.sort((a, b) => {
-          let maxA = d3.max(a.values, v => v.medianPrice);
-          let maxB = d3.max(b.values, v => v.medianPrice);
-          return d3.descending(maxA, maxB);
-        });
-        break;
-      case 'min':
-        processedData.sort((a, b) => {
-          let minA = d3.min(a.values, v => v.medianPrice);
-          let minB = d3.min(b.values, v => v.medianPrice);
-          return d3.ascending(minA, minB);
-        });
-        break;
-      case 'avg':
-        processedData.sort((a, b) => {
-          let avgA = d3.mean(a.values, v => v.medianPrice);
-          let avgB = d3.mean(b.values, v => v.medianPrice);
-          return d3.descending(avgA, avgB);
-        });
-        break;
-      default:
-        break;
-
-    }
-
-    // 更新每個流的位置
-    container.selectAll(".layer")
-      .data(processedData)
-      .selectAll("path")
-      .data(d => [d.values])
-      .attr("d", areaGenerator);
-
-    container.selectAll(".layer")
-      .data(processedData)
-      .selectAll("path")
-      .style("fill", function (d, i, nodes) {
-        let parentNodeData = d3.select(nodes[i].parentNode).datum();
-        let key = parentNodeData.key;
-        return colorMapping[key];
-      });
-
-  }
-
-  // 添加輔助線
-  let xAxis = d3.axisBottom(xScale);
-  let yAxis = d3.axisLeft(yScale);
-  container.append("g")
-    .attr("transform", "translate(0," + height + ")")
-    .call(xAxis);
-  container.append("g")
-    .call(yAxis);
-
-  svg.append("text")
-    .attr("x", width / 2)
-    .attr("y", height + margin.top)
+  canvas.append("text")
+    .attr("x", graphWidth / 2)
+    .attr("y", graphHeight + 30)
     .style("text-anchor", "middle")
-    .text("Year");
+    .text("Sale Date");
 
-  // 調整y軸標籤的位置
-  svg.append("text")
+  canvas.append("text")
     .attr("transform", "rotate(-90)")
-    .attr("y", 0 - margin.left + 90)
-    .attr("x", 0 - (height / 2))
-    .attr("dy", "1em")
+    .attr("y", -40)
+    .attr("x", -graphHeight / 2)
     .style("text-anchor", "middle")
     .text("Value");
 
-  // 調整圖例的位置
-  var legend = svg.selectAll(".legend")
-    .data(color.domain())
-    .enter().append("g")
-    .attr("class", "legend")
-    .attr("transform", function (d, i) { return "translate(0," + (i * 20 + height + margin.top - 120) + ")"; });
-  legend.append("rect")
-    .attr("x", width - 18)
-    .attr("width", 18)
-    .attr("height", 18)
-    .style("fill", color);
-
-  legend.append("text")
-    .attr("x", width - 24)
-    .attr("y", 9)
-    .attr("dy", ".35em")
-    .style("text-anchor", "end")
-    .text(function (d) { return d; });
-
-  // 創建多選框
-  let streamSelectionDiv = d3.select("#streamSelection");
-  processedData.forEach((stream, index) => {
-    let checkboxWrapper = streamSelectionDiv.append("div");
-    checkboxWrapper.append("input")
-      .attr("type", "checkbox")
-      .attr("checked", true)
-      .attr("id", "streamCheckbox" + index)
-      .on("change", function () {
-        let isSelected = d3.select(this).property("checked");
-        if (isSelected) {
-          container.select(".layer:nth-child(" + (index + 1) + ")").style("display", "block");
-        } else {
-          container.select(".layer:nth-child(" + (index + 1) + ")").style("display", "none");
-        }
-      });
-    checkboxWrapper.append("label")
-      .attr("for", "streamCheckbox" + index)
-      .text(stream.key);
+  d3.selectAll(".streamCheckbox input").on("change", function () {
+    drawStreamGraph(data);
   });
+}
 
-
-}).catch(error => {
-  console.log("加載數據時出錯:", error);
-});
-
+fetchAndProcessData().then(drawStreamGraph);
