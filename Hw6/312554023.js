@@ -1,7 +1,7 @@
 const graphDimensions = {
   width: 1200,
-  height: 860,
-  margin: { top: 20, right: 60, bottom: 40, left: 60 }
+  height: 800,
+  margin: { top: 60, right: 60, bottom: 40, left: 60 }
 };
 
 const graphWidth = graphDimensions.width - graphDimensions.margin.left - graphDimensions.margin.right;
@@ -27,6 +27,8 @@ function getSelectedStreams() {
   return selectedKeys;
 }
 
+let selectedKeys = getSelectedStreams();
+
 async function fetchAndProcessData() {
   let rawData = await d3.csv("http://vis.lab.djosix.com:2023/data/ma_lga_12345.csv");
   rawData = rawData.filter(d => formatDate(d.saledate) > formatDate('30/09/2007'));
@@ -49,8 +51,8 @@ async function fetchAndProcessData() {
   });
 }
 
-function drawStreamGraph(data) {
-  const selectedKeys = getSelectedStreams();
+function drawStreamGraph(data, keysToUpdate) {
+  selectedKeys = keysToUpdate || selectedKeys;  // 使用提供的keys，否則使用當前的selectedKeys
   const stackedData = d3.stack().keys(selectedKeys)(data);
   const keys = Object.keys(data[0]).filter(key => key !== "saledate");
 
@@ -136,8 +138,51 @@ function drawStreamGraph(data) {
     .text("Value");
 
   d3.selectAll(".streamCheckbox input").on("change", function () {
+    selectedKeys = getSelectedStreams();  // 更新selectedKeys
     drawStreamGraph(data);
   });
+
+  function createDraggableList(keys) {
+    const reversedKeys = [...keys].reverse();  // 反轉keys的順序
+
+    const ul = d3.select("#draggableList");
+    const items = ul.selectAll("li").data(reversedKeys);  // 使用反轉的keys
+
+    items.enter()
+      .append("li")
+      .merge(items)
+      .text(d => d)
+      .attr("draggable", true)
+      .on("dragstart", dragstart)
+      .on("dragover", dragover)
+      .on("drop", drop);
+
+    items.exit().remove();
+
+    function dragstart(event, d) {
+      event.dataTransfer.setData("text/plain", d);
+    }
+
+    function dragover(event) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+    }
+
+    function drop(event, d) {
+      event.preventDefault();
+      const from = event.dataTransfer.getData("text/plain");
+      const to = d;
+      const idxFrom = selectedKeys.indexOf(from);
+      const idxTo = selectedKeys.indexOf(to);
+      if (idxFrom !== -1 && idxTo !== -1) {
+        [selectedKeys[idxFrom], selectedKeys[idxTo]] = [selectedKeys[idxTo], selectedKeys[idxFrom]];
+      }
+
+      drawStreamGraph(data, selectedKeys);
+      createDraggableList(selectedKeys);  // 注意：這裡仍然使用原始的selectedKeys，不是reversedKeys
+    }
+  }
+  createDraggableList(selectedKeys);
 }
 
-fetchAndProcessData().then(drawStreamGraph);
+fetchAndProcessData().then(data => drawStreamGraph(data, selectedKeys));  // 初始化時繪製圖形
