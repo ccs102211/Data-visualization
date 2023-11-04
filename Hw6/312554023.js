@@ -52,7 +52,7 @@ async function fetchAndProcessData() {
 }
 
 function drawStreamGraph(data, keysToUpdate) {
-  selectedKeys = keysToUpdate || selectedKeys;  // 使用提供的keys，否則使用當前的selectedKeys
+  selectedKeys = keysToUpdate || selectedKeys;
   const stackedData = d3.stack().keys(selectedKeys)(data);
   const keys = Object.keys(data[0]).filter(key => key !== "saledate");
 
@@ -138,15 +138,15 @@ function drawStreamGraph(data, keysToUpdate) {
     .text("Value");
 
   d3.selectAll(".streamCheckbox input").on("change", function () {
-    selectedKeys = getSelectedStreams();  // 更新selectedKeys
+    selectedKeys = getSelectedStreams();
     drawStreamGraph(data);
   });
 
   function createDraggableList(keys) {
-    const reversedKeys = [...keys].reverse();  // 反轉keys的順序
+    const reversedKeys = [...keys].reverse();
 
     const ul = d3.select("#draggableList");
-    const items = ul.selectAll("li").data(reversedKeys);  // 使用反轉的keys
+    const items = ul.selectAll("li").data(reversedKeys);
 
     items.enter()
       .append("li")
@@ -179,10 +179,10 @@ function drawStreamGraph(data, keysToUpdate) {
       }
 
       drawStreamGraph(data, selectedKeys);
-      createDraggableList(selectedKeys);  // 注意：這裡仍然使用原始的selectedKeys，不是reversedKeys
+      createDraggableList(selectedKeys);
     }
   }
   createDraggableList(selectedKeys);
 }
 
-fetchAndProcessData().then(data => drawStreamGraph(data, selectedKeys));  // 初始化時繪製圖形
+fetchAndProcessData().then(data => drawStreamGraph(data, selectedKeys));
