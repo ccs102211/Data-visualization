@@ -73,7 +73,7 @@ function HorizonChart(data, {
   marginRight = 0,
   marginBottom = 0,
   marginLeft = 0,
-  width = 640,
+  width = 1200,
   size = 25,
   bands = 5,
   padding = 1,
@@ -157,11 +157,13 @@ function HorizonChart(data, {
     .text(([z]) => z);
 
   g.selectAll("use")
-    .data((d, i) => d[1].map(index => ({ index, group: d[0] })))
+    .data((d) => d[1].map(index => ({ index, group: d[0] })))
     .join("use")
+    .attr("xlink:href", (d) => `${new URL(`#${uid}-path-${d.index}`, location)}`)
     .on("mousemove", function (event, d) {
       const mouseX = event.pageX - this.getBoundingClientRect().left;
       const date = xScale.invert(mouseX);
+      const mouseY = event.pageY - this.getBoundingClientRect().top;
 
       const closestDataPoint = data.reduce((prev, curr) => {
         return (Math.abs(curr.date - date) < Math.abs(prev.date - date) ? curr : prev);
@@ -171,7 +173,7 @@ function HorizonChart(data, {
       const formattedValue = closestDataPoint.level.toFixed(2);
 
       tooltip.style('opacity', 1)
-        .html(`測站: ${closestDataPoint.station}<br>日期: ${formattedDate}<br>值: ${formattedValue}`)
+        .html(`測站: ${d.group}<br>日期: ${formattedDate}<br>值: ${formattedValue}`)
         .style('left', (event.pageX + 10) + 'px')
         .style('top', (event.pageY + 10) + 'px');
     })
