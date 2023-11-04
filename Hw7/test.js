@@ -160,18 +160,14 @@ function HorizonChart(data, {
   g.selectAll("use")
     .data((d, i) => d[1].map(index => ({ index, group: d[0] })))
     .join("use")
-    // ... other attribute settings ...
     .on("mousemove", function (event, d) {
-      // Convert the mouse position to a date using the xScale.
       const mouseX = event.pageX - this.getBoundingClientRect().left;
       const date = xScale.invert(mouseX);
 
-      // Find the closest data point to the mouse position.
       const closestDataPoint = data.reduce((prev, curr) => {
         return (Math.abs(curr.date - date) < Math.abs(prev.date - date) ? curr : prev);
       });
 
-      // Use the actual data values from the closest data point for the tooltip.
       const formattedDate = d3.timeFormat("%Y/%m/%d")(closestDataPoint.date);
       const formattedValue = closestDataPoint.level.toFixed(2);
 

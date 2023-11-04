@@ -159,7 +159,7 @@ function HorizonChart(data, {
   g.selectAll("use")
     .data((d) => d[1].map(index => ({ index, group: d[0] })))
     .join("use")
-    .attr("xlink:href", (d) => `${new URL(`#${uid}-path-${d.index}`, location)}`)
+    //.attr("xlink:href", (d) => `${new URL(`#${uid}-path-${d.index}`, location)}`)
     .on("mousemove", function (event, d) {
       const mouseX = event.pageX - this.getBoundingClientRect().left;
       const date = xScale.invert(mouseX);
@@ -180,8 +180,6 @@ function HorizonChart(data, {
     .on("mouseout", function () {
       tooltip.style('opacity', 0);
     });
-
-
 
   svg.append("g")
     .attr("transform", `translate(0,${marginTop})`)
