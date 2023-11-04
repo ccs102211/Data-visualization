@@ -14,7 +14,40 @@ function median(values) {
   }
 }
 
-// 在SVG容器或其他合适的位置添加此代码
+function initializeEventHandlers(horizonChartData, pollutants, pollutantColors) {
+  const select = document.getElementById("year-selector");
+  if (select) {
+    select.addEventListener("change", function () {
+      const selectedYear = this.value;
+      const filteredDataByYear = horizonChartData.filter(d => d.date.getFullYear().toString() === selectedYear);
+
+      document.querySelectorAll("svg").forEach(svg => svg.remove());
+
+
+      pollutants.forEach(pollutant => {
+        const filteredData = filteredDataByYear.filter(d => d.pollutant === pollutant);
+
+        const horizonChart = HorizonChart(filteredData, {
+          x: d => d.date,
+          y: d => d.level,
+          z: d => d.station,
+          yDomain: [0, d3.max(filteredData, d => d.level)],
+          width: 1280,
+          size: 50,
+          scheme: pollutantColors[pollutant]
+
+        });
+        document.body.appendChild(horizonChart);
+      });
+    });
+
+    select.value = "2017";
+    select.dispatchEvent(new Event('change'));
+  } else {
+    console.error("Element #year-selector was not found!");
+  }
+}
+
 const tooltip = d3.select('body').append('div')
   .attr('class', 'tooltip')
   .style('opacity', 0)
@@ -40,7 +73,7 @@ function HorizonChart(data, {
   marginRight = 0,
   marginBottom = 0,
   marginLeft = 0,
-  width = 860,
+  width = 640,
   size = 25,
   bands = 5,
   padding = 1,
@@ -123,6 +156,31 @@ function HorizonChart(data, {
     .attr("dy", "0.35em")
     .text(([z]) => z);
 
+  g.selectAll("use")
+    .data((d, i) => d[1].map(index => ({ index, group: d[0] })))
+    .join("use")
+    .on("mousemove", function (event, d) {
+      const mouseX = event.pageX - this.getBoundingClientRect().left;
+      const date = xScale.invert(mouseX);
+
+      const closestDataPoint = data.reduce((prev, curr) => {
+        return (Math.abs(curr.date - date) < Math.abs(prev.date - date) ? curr : prev);
+      });
+
+      const formattedDate = d3.timeFormat("%Y/%m/%d")(closestDataPoint.date);
+      const formattedValue = closestDataPoint.level.toFixed(2);
+
+      tooltip.style('opacity', 1)
+        .html(`測站: ${closestDataPoint.station}<br>日期: ${formattedDate}<br>值: ${formattedValue}`)
+        .style('left', (event.pageX + 10) + 'px')
+        .style('top', (event.pageY + 10) + 'px');
+    })
+    .on("mouseout", function () {
+      tooltip.style('opacity', 0);
+    });
+
+
+
   svg.append("g")
     .attr("transform", `translate(0,${marginTop})`)
     .call(xAxis)
@@ -186,12 +244,12 @@ d3.csv("http://vis.lab.djosix.com:2023/data/air-pollution.csv").then(data => {
     }
   }
   const pollutantColors = {
-    "CO": d3.schemeBlues,
-    "CN2": d3.schemeReds,
-    "O3": d3.schemeGreens,
-    "PM2.5": d3.schemeOranges,
-    "PM10": d3.schemePurples,
-    "SO2": d3.schemeGreys
+    "CO": d3.schemeReds,
+    "CN2": d3.schemeOranges,
+    "O3": d3.schemeGreys,
+    "PM2.5": d3.schemeGreens,
+    "PM10": d3.schemeBlues,
+    "SO2": d3.schemePurples
   };
   const years = Array.from(new Set(data.map(d => d["Measurement date"].split(" ")[0].split("-")[0])));
   const select = document.getElementById("year-selector");
@@ -202,30 +260,5 @@ d3.csv("http://vis.lab.djosix.com:2023/data/air-pollution.csv").then(data => {
     select.appendChild(option);
   });
 
-  select.addEventListener("change", function () {
-    const selectedYear = this.value;
-    const filteredDataByYear = horizonChartData.filter(d => d.date.getFullYear().toString() === selectedYear);
-
-    document.querySelectorAll("svg").forEach(svg => svg.remove());
-
-
-    pollutants.forEach(pollutant => {
-      const filteredData = filteredDataByYear.filter(d => d.pollutant === pollutant);
-
-      const horizonChart = HorizonChart(filteredData, {
-        x: d => d.date,
-        y: d => d.level,
-        z: d => d.station,
-        yDomain: [0, d3.max(filteredData, d => d.level)],
-        width: 1280,
-        size: 50,
-        scheme: pollutantColors[pollutant]
-
-      });
-      document.body.appendChild(horizonChart);
-    });
-  });
-  select.value = "2017";
-  select.dispatchEvent(new Event('change'));
-
+  initializeEventHandlers(horizonChartData, pollutants, pollutantColors);
 });

@@ -161,25 +161,29 @@ function HorizonChart(data, {
     .data((d, i) => d[1].map(index => ({ index, group: d[0] })))
     .join("use")
     // ... other attribute settings ...
-    .on("mousemove", function (event, d) { // 现在这里有了 d，表示当前元素的数据
+    .on("mousemove", function (event, d) {
+      // Convert the mouse position to a date using the xScale.
       const mouseX = event.pageX - this.getBoundingClientRect().left;
-      const mouseY = event.pageY - this.getBoundingClientRect().top;
-
       const date = xScale.invert(mouseX);
-      const value = yScale.invert(mouseY);
 
-      const formatDate = d3.timeFormat("%Y/%m/%d");
-      const formattedDate = formatDate(date);
-      const formattedValue = value.toFixed(2);
+      // Find the closest data point to the mouse position.
+      const closestDataPoint = data.reduce((prev, curr) => {
+        return (Math.abs(curr.date - date) < Math.abs(prev.date - date) ? curr : prev);
+      });
+
+      // Use the actual data values from the closest data point for the tooltip.
+      const formattedDate = d3.timeFormat("%Y/%m/%d")(closestDataPoint.date);
+      const formattedValue = closestDataPoint.level.toFixed(2);
 
       tooltip.style('opacity', 1)
-        .html(`測站: ${d.group}<br>日期: ${formattedDate}<br>值: ${formattedValue}`) // 确保这里使用的是 d.group
+        .html(`測站: ${closestDataPoint.station}<br>日期: ${formattedDate}<br>值: ${formattedValue}`)
         .style('left', (event.pageX + 10) + 'px')
         .style('top', (event.pageY + 10) + 'px');
     })
     .on("mouseout", function () {
       tooltip.style('opacity', 0);
     });
+
 
 
   svg.append("g")
