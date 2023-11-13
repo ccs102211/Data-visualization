@@ -1,22 +1,49 @@
 body {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 300;
-  margin: 0;
+  margin: 0px;
+  overflow: hidden;
 }
 
-#container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+circle {
+  opacity: 0.3;
+}
+
+text {
+  font-family: sans-serif;
+}
+
+.tick text {
+  font-size: 2.7em;
+  fill: #635F5D;
+}
+
+.tick line {
+  stroke: #C0C0BB;
+}
+
+.axis-label {
+  font-size: 5em;
+  fill: #8E8883;
+}
+
+#menus {
+  font-size: 2.5em;
+  text-align: center;
+}
+
+#menus select {
+  font-size: 2.5rem;
+}
+
+#menus select option {
+  font-size: 1rem;
 }
 
 svg {
-  transition: transform 0.3s, opacity 0.3s;
-}
-
-div[id^="heatmap-"] {
   display: block;
-  margin-bottom: 20px;
+  margin: auto;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
 }
